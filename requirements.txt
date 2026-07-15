@@ -1,0 +1,30 @@
+# Data manipulation
+pandas>=2.0
+numpy>=1.24
+
+# Machine learning
+scikit-learn>=1.4
+xgboost>=2.0
+lightgbm>=4.0
+
+# Explainability
+shap>=0.45
+
+# Web app
+streamlit>=1.32
+
+# Local LLM
+ollama>=0.1
+
+# Visualization
+matplotlib>=3.8
+seaborn>=0.13
+plotly>=5.18
+
+# Exploration and testing
+jupyterlab>=4.0
+pytest>=8.0
+
+# Configuration and utilities
+pyyaml>=6.0
+python-dotenv>=1.0
