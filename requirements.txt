@@ -7,6 +7,9 @@ scikit-learn>=1.4
 xgboost>=2.0
 lightgbm>=4.0
 
+# API and web requests
+requests>=2.31
+
 # Explainability
 shap>=0.45
 
