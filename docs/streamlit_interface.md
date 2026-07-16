@@ -155,11 +155,13 @@ st_folium(m, width=700, height=500)
 | MSR 上限 | `st.slider` | `float` | `0.30` | `[0.1, 1.0]` |
 | TDSR 上限 | `st.slider` | `float` | `0.55` | `[0.1, 1.0]` |
 | 现有月债务 | `st.number_input` | `float` | `0` | `>= 0` |
+| 现金存款 | `st.number_input` | `float` | `60000` | `>= 0`；传 `None` 表示未知（此时不启用首付预算约束） |
 | CPF 可用金额 | `st.number_input` | `float` | `0` | `>= 0` |
 | 偏好房型 | `st.multiselect` | `List[str]` | 全部 | 从 `df["flat_type"].unique()` 取值 |
 | 偏好区域 | `st.multiselect` | `List[str]` | 全部 | 从 `df["town"].unique()` 取值 |
 
 > **政策说明**：自 2024 年 8 月起，HDB 组屋贷款 LTV 上限为 75%，即最低首付 25%。银行贷款利率通常高于 HDB 优惠利率 2.6%，前端默认使用 3.5%（用户可手动调整）。MSR 上限 30%，TDSR 上限 55%。
+> **首付预算约束**：当提供 `cash_savings`（非 None）时，`max_affordable_price` 会额外用首付预算封顶——首付 + BSD 必须落在 现金存款 + CPF 之内（求解函数 `max_price_from_upfront_budget`）。简化假设：现金与 CPF 合并计入前期预算，未建模银行贷款"至少 5% 须为现金"的规则。前端表单建议必填该项，避免向存款不足的用户展示误导性的高可负担价。
 
 ### 5.2 转换为 `BuyerProfile`
 
@@ -177,6 +179,7 @@ if loan_type == "hdb":
         msr_limit=msr_limit,
         tdsr_limit=tdsr_limit,
         existing_debt_monthly=existing_debt_monthly,
+        cash_savings=cash_savings,
         cpf_available=cpf_available,
     )
 else:
@@ -188,6 +191,7 @@ else:
         msr_limit=msr_limit,
         tdsr_limit=tdsr_limit,
         existing_debt_monthly=existing_debt_monthly,
+        cash_savings=cash_savings,
         cpf_available=cpf_available,
     )
 ```
@@ -203,6 +207,7 @@ profile = BuyerProfile(
     msr_limit=msr_limit,
     tdsr_limit=tdsr_limit,
     existing_debt_monthly=existing_debt_monthly,
+    cash_savings=cash_savings,
     cpf_available=cpf_available,
     loan_type=loan_type,  # "hdb" or "bank"
 )
@@ -233,6 +238,7 @@ metrics = affordability_metrics(predicted_price, profile)
 | `monthly_payment` | 等额本息月供 | SGD/月 |
 | `monthly_income` | 家庭月收入 | SGD/月 |
 | `existing_debt_monthly` | 现有月债务 | SGD/月 |
+| `cash_savings` | 现金存款（`None` = 未知，未启用首付预算约束） | SGD |
 | `msr` | Mortgage Servicing Ratio = 月供 / 月收入 | 比例 |
 | `msr_limit` | MSR 上限 | 比例 |
 | `tdsr` | Total Debt Servicing Ratio = (月供 + 现有债务) / 月收入 | 比例 |

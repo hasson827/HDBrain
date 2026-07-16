@@ -84,6 +84,7 @@ def test_affordability_metrics_fields():
         "monthly_payment",
         "monthly_income",
         "existing_debt_monthly",
+        "cash_savings",
         "msr",
         "msr_limit",
         "tdsr",
@@ -140,3 +141,37 @@ def test_invalid_profile():
         max_affordable_price(BuyerProfile(monthly_income=8_000, downpayment_pct=1.0))
     with pytest.raises(ValueError):
         max_affordable_price(BuyerProfile(monthly_income=8_000, loan_type="cash"))
+    with pytest.raises(ValueError):
+        max_affordable_price(BuyerProfile(monthly_income=8_000, cash_savings=-1.0))
+
+
+def test_cash_savings_none_keeps_loan_bound():
+    # cash_savings defaults to None -> upfront constraint is not applied.
+    p_unknown = BuyerProfile(monthly_income=8_000)
+    p_rich = BuyerProfile(monthly_income=8_000, cash_savings=10_000_000)
+    assert max_affordable_price(p_unknown) == pytest.approx(max_affordable_price(p_rich))
+
+
+def test_cash_savings_caps_price():
+    # $50k savings, 25% downpayment -> upfront budget binds far below the MSR bound.
+    p = BuyerProfile(monthly_income=8_000, cash_savings=50_000)
+    max_price = max_affordable_price(p)
+    unconstrained = max_affordable_price(BuyerProfile(monthly_income=8_000))
+    assert max_price < unconstrained
+    # At the cap, downpayment + BSD should exhaust the budget.
+    upfront = max_price * p.downpayment_pct + stamp_duty(max_price)
+    assert upfront == pytest.approx(50_000, abs=1)
+    # A price above the cap is not affordable even though the mortgage fits MSR.
+    m = affordability_metrics(max_price * 1.05, p)
+    assert m["affordable"] is False
+
+
+def test_cash_savings_pools_with_cpf():
+    p_cash_only = BuyerProfile(monthly_income=8_000, cash_savings=50_000)
+    p_mixed = BuyerProfile(monthly_income=8_000, cash_savings=30_000, cpf_available=20_000)
+    assert max_affordable_price(p_cash_only) == pytest.approx(max_affordable_price(p_mixed))
+
+
+def test_cash_savings_zero_means_nothing_affordable():
+    p = BuyerProfile(monthly_income=8_000, cash_savings=0.0)
+    assert max_affordable_price(p) == 0.0

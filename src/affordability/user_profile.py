@@ -1,7 +1,7 @@
 """Buyer profile dataclass for the affordability engine."""
 
 from dataclasses import dataclass
-from typing import ClassVar, Literal
+from typing import ClassVar, Literal, Optional
 
 
 @dataclass
@@ -15,6 +15,7 @@ class BuyerProfile:
       - 30% Mortgage Servicing Ratio (MSR) limit
       - 55% Total Debt Servicing Ratio (TDSR) limit
       - No existing monthly debt obligations
+      - Cash savings unknown (upfront-budget constraint not applied)
     """
 
     monthly_income: float                          # Household monthly income (SGD)
@@ -25,6 +26,7 @@ class BuyerProfile:
     tdsr_limit: float = 0.55                       # Max total debt payments / monthly income
     existing_debt_monthly: float = 0.0             # Existing monthly debt obligations (SGD)
     cpf_available: float = 0.0                     # CPF funds available for upfront costs (SGD)
+    cash_savings: Optional[float] = None           # Cash savings for upfront costs (SGD); None = unknown, skip upfront constraint
     loan_type: Literal["hdb", "bank"] = "hdb"      # Loan type: hdb or bank
 
     # Class-level policy parameters
