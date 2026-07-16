@@ -77,4 +77,4 @@ HDBrain/
 
 - The Random Forest model is very large due to full-depth trees. If disk space is a concern, consider reducing `n_estimators` or `max_depth` in `src/models/random_forest.py`.
 - Prediction intervals from the quantile model are calibrated on the 2017–2023 distribution; coverage on 2024 data is low due to price inflation drift. See `docs/streamlit_interface.md` for the Streamlit app interface spec.
-- The affordability engine uses a default 25% downpayment and a 30% Mortgage Servicing Ratio (MSR) limit, consistent with current HDB concessionary-loan rules. See `src/affordability/` for the full calculation logic.
+- The affordability engine uses a default 25% downpayment and a 30% Mortgage Servicing Ratio (MSR) limit, consistent with current HDB concessionary-loan rules. When `cash_savings` is provided on the `BuyerProfile`, the maximum affordable price is additionally capped by the upfront budget (downpayment + stamp duty must fit within cash + CPF). See `src/affordability/` for the full calculation logic.

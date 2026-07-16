@@ -80,16 +80,55 @@ def _validate_profile(profile: BuyerProfile) -> None:
         raise ValueError("msr_limit must be in (0, 1]")
     if profile.tdsr_limit <= 0 or profile.tdsr_limit > 1:
         raise ValueError("tdsr_limit must be in (0, 1]")
+    if profile.cash_savings is not None and profile.cash_savings < 0:
+        raise ValueError("cash_savings must be >= 0 or None")
+
+
+def max_price_from_upfront_budget(budget: float, downpayment_pct: float) -> float:
+    """Largest price whose downpayment + BSD fits within the upfront budget.
+
+    Solves P * downpayment_pct + stamp_duty(P) <= budget by bisection
+    (the left side is strictly increasing in P).
+    """
+    if budget <= 0:
+        return 0.0
+
+    def upfront(price: float) -> float:
+        return price * downpayment_pct + stamp_duty(price)
+
+    lo, hi = 0.0, 1_000_000.0
+    while upfront(hi) < budget and hi < 1e12:
+        hi *= 2
+    for _ in range(80):
+        mid = (lo + hi) / 2
+        if upfront(mid) <= budget:
+            lo = mid
+        else:
+            hi = mid
+    return float(lo)
 
 
 def max_affordable_price(profile: BuyerProfile) -> float:
-    """Maximum property price affordable under MSR, TDSR, and downpayment constraints."""
+    """Maximum property price affordable under MSR, TDSR, and downpayment constraints.
+
+    When `cash_savings` is provided (not None), the price is additionally capped by
+    the upfront budget: downpayment + BSD must fit within cash_savings + cpf_available.
+    Simplification: cash and CPF are pooled for upfront costs; the bank-loan rule that
+    at least 5% must be paid in cash is not modelled.
+    """
     _validate_profile(profile)
     max_monthly = profile.max_monthly_payment()
     max_loan = max_loan_from_payment(max_monthly, profile.interest_rate, profile.tenure_years)
     if profile.downpayment_pct >= 1.0:
         return float("inf")
-    return max_loan / (1 - profile.downpayment_pct)
+    price_cap_loan = max_loan / (1 - profile.downpayment_pct)
+
+    if profile.cash_savings is None:
+        return price_cap_loan
+
+    upfront_budget = profile.cash_savings + profile.cpf_available
+    price_cap_upfront = max_price_from_upfront_budget(upfront_budget, profile.downpayment_pct)
+    return min(price_cap_loan, price_cap_upfront)
 
 
 def affordability_metrics(price: float, profile: BuyerProfile) -> Dict[str, float]:
@@ -118,6 +157,7 @@ def affordability_metrics(price: float, profile: BuyerProfile) -> Dict[str, floa
         "monthly_payment": monthly_pay,
         "monthly_income": profile.monthly_income,
         "existing_debt_monthly": profile.existing_debt_monthly,
+        "cash_savings": profile.cash_savings,
         "msr": msr,
         "msr_limit": profile.msr_limit,
         "tdsr": tdsr,
