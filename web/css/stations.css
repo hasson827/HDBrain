@@ -1,0 +1,592 @@
+/*
+ * Per-station layout (README_XCH §8 S2 tasks 4/6/6a). Filled in station-by-
+ * station as each one is reworked from the S1 plain-HTML skeleton.
+ */
+
+.accent {
+  color: var(--coral);
+}
+
+/* ================= ST0 Departure ================= */
+
+.st0 {
+  background-color: var(--bg-starfield);
+  background-image:
+    radial-gradient(1.5px 1.5px at 10% 20%, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(1px 1px at 30% 65%, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1.5px 1.5px at 55% 15%, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1px 1px at 75% 45%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1.5px 1.5px at 90% 75%, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(1px 1px at 15% 85%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1.5px 1.5px at 40% 40%, rgba(255, 255, 255, 0.6), transparent);
+  background-repeat: repeat;
+  background-size: 340px 340px;
+  display: flex;
+  align-items: center;
+}
+
+.st0-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-12);
+  align-items: center;
+}
+
+.st0-copy .lede {
+  margin-bottom: var(--space-8);
+}
+
+.scroll-cue {
+  display: inline-flex;
+  gap: var(--space-2);
+  text-decoration: none;
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+  border-bottom: 1px solid rgba(232, 237, 245, 0.3);
+  padding-bottom: var(--space-1);
+}
+
+.scroll-cue:hover {
+  color: var(--coral);
+  border-color: var(--coral);
+}
+
+.st0-planet {
+  justify-self: center;
+}
+
+.st0-planet img {
+  width: min(70vw, 480px);
+  height: auto;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius-pill);
+}
+
+@media (min-width: 900px) {
+  .st0-grid {
+    grid-template-columns: 1.1fr 1fr;
+  }
+
+  .st0-planet {
+    justify-self: end;
+  }
+
+  .st0-planet img {
+    width: min(34vw, 560px);
+  }
+}
+
+/* ================= ST1 Three Questions ================= */
+
+.question-cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+  margin-top: var(--space-8);
+}
+
+@media (min-width: 700px) {
+  .question-cards {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.question-card {
+  border-top: var(--border-hairline);
+  padding-top: var(--space-6);
+  text-align: center;
+}
+
+.question-icon {
+  display: block;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto var(--space-4);
+  color: var(--coral);
+}
+
+.question-card a {
+  display: inline-block;
+  margin-top: var(--space-2);
+  font-size: var(--text-sm);
+  text-decoration: none;
+}
+
+.question-card a:hover {
+  text-decoration: underline;
+}
+
+/* ================= ST2 Budget Stop ================= */
+
+.st2-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-8);
+}
+
+@media (min-width: 900px) {
+  .st2-layout {
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    align-items: start;
+  }
+
+  /* Sticky only makes sense once the form and the map/result column sit
+     side by side (>=900px) — below that they stack in one column, and a
+     sticky form would float on top of the map/result content beneath it
+     (real bug found in the S2 mobile check: the map rendered directly over
+     the form fields and Calculate button once scrolled past the form). */
+  .st2-form-card,
+  .st3-form-card {
+    position: sticky;
+    top: calc(var(--nav-height) + var(--space-6));
+  }
+}
+
+.result-figure {
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  font-weight: 800;
+  color: var(--ink-1);
+  margin: 0 0 var(--space-2);
+}
+
+.result-figure .accent {
+  color: var(--coral);
+}
+
+.tier-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+  margin-bottom: var(--space-6);
+}
+
+.tier-summary strong {
+  color: var(--ink-1);
+  font-variant-numeric: tabular-nums;
+}
+
+.map-wrap {
+  position: relative;
+}
+
+.city-of-lights {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.city-of-lights .island {
+  fill: var(--bg-2);
+  stroke: rgba(232, 237, 245, 0.18);
+  stroke-width: 1;
+}
+
+.map-marker circle {
+  stroke: rgba(10, 18, 32, 0.6);
+  stroke-width: 1;
+  cursor: pointer;
+  transition: r var(--duration-fast) var(--ease-out-expo);
+}
+
+.map-marker:focus-visible {
+  outline: none;
+}
+
+.map-marker:focus-visible circle {
+  stroke: var(--ink-1);
+  stroke-width: 2;
+}
+
+.map-marker.tier-none circle {
+  fill: var(--tier-off);
+}
+
+.map-marker.tier-foothold circle {
+  fill: var(--tier-foothold);
+  filter: drop-shadow(0 0 3px rgba(217, 154, 63, 0.7));
+}
+
+.map-marker.tier-cosy circle {
+  fill: var(--tier-cosy);
+  filter: drop-shadow(0 0 5px rgba(255, 209, 102, 0.8));
+}
+
+.map-marker.tier-plenty circle {
+  fill: var(--tier-plenty);
+  filter: drop-shadow(0 0 8px rgba(255, 233, 168, 0.9));
+  r: 7.5;
+}
+
+.map-marker.is-highlighted circle {
+  stroke: var(--ink-1);
+  stroke-width: 3;
+  r: 9;
+}
+
+.map-tooltip {
+  position: absolute;
+  transform: translate(-50%, -140%);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--ink-1);
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: var(--z-tooltip);
+}
+
+.map-legend {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  padding: 0;
+  margin: var(--space-4) 0 0;
+  font-size: var(--text-xs);
+  color: var(--ink-2);
+}
+
+.map-legend li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.map-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  display: inline-block;
+}
+
+.map-legend-dot.tier-plenty {
+  background: var(--tier-plenty);
+}
+
+.map-legend-dot.tier-cosy {
+  background: var(--tier-cosy);
+}
+
+.map-legend-dot.tier-foothold {
+  background: var(--tier-foothold);
+}
+
+.map-legend-dot.tier-none {
+  background: var(--tier-off);
+}
+
+/* ================= ST3 Valuation Stop ================= */
+
+.st3-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-8);
+}
+
+@media (min-width: 900px) {
+  .st3-layout {
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    align-items: start;
+  }
+}
+
+.interval-bar {
+  margin: var(--space-4) 0 var(--space-8);
+}
+
+.interval-track {
+  position: relative;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(90deg, var(--strait-blue), var(--mint));
+  opacity: 0.5;
+}
+
+.interval-point {
+  position: absolute;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-pill);
+  background: var(--ink-1);
+  border: 3px solid var(--bg-1);
+  transform: translate(-50%, -50%);
+}
+
+.interval-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-xs);
+  color: var(--ink-2);
+  margin-top: var(--space-2);
+}
+
+.interval-labels-mid {
+  color: var(--ink-2);
+}
+
+.shap-bars {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.shap-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.shap-label {
+  color: var(--ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shap-bar-track {
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(232, 237, 245, 0.08);
+  overflow: hidden;
+}
+
+.shap-bar {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-pill);
+}
+
+.shap-bar.is-positive {
+  background: var(--mint);
+}
+
+.shap-bar.is-negative {
+  background: var(--coral);
+}
+
+.shap-value {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.shap-value.is-positive {
+  color: var(--mint);
+}
+
+.shap-value.is-negative {
+  color: var(--coral);
+}
+
+.comp-header {
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.comp-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4);
+}
+
+.comp-card {
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
+  padding: var(--space-4);
+}
+
+.comp-icon {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  color: var(--ink-2);
+}
+
+.comp-price {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-md);
+  margin: 0 0 var(--space-1);
+}
+
+.comp-meta {
+  font-size: var(--text-xs);
+  color: var(--ink-2);
+  margin: 0;
+}
+
+/* ================= ST4 Time Stop ================= */
+
+.st4-controls {
+  margin-bottom: var(--space-6);
+  align-items: flex-end;
+}
+
+.st4-controls label {
+  flex: 1;
+  min-width: 180px;
+}
+
+.st4-slider-label {
+  min-width: 260px;
+}
+
+.st4-slider-label strong {
+  color: var(--coral);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ================= ST5 / ST6 shared chart-station layout ================= */
+
+.chart-station-controls {
+  margin-bottom: var(--space-6);
+}
+
+.metric-tabs {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+}
+
+.metric-tab {
+  background: var(--bg-2);
+  color: var(--ink-2);
+  border: var(--border-hairline);
+  border-radius: var(--radius-pill);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.metric-tab[aria-pressed="true"] {
+  background: var(--coral);
+  color: var(--ink-on-accent);
+  border-color: var(--coral);
+}
+
+/* ================= ST7 Home ================= */
+
+.st7-report-card {
+  margin: var(--space-6) 0 var(--space-8);
+}
+
+.st7-report-body {
+  margin-top: var(--space-6);
+}
+
+.st7-report-body:empty {
+  margin-top: 0;
+}
+
+.report-section {
+  padding: var(--space-6) 0;
+  border-top: var(--border-hairline);
+}
+
+.report-section:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.report-section h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.report-section-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6em;
+  height: 1.6em;
+  flex: none;
+  border-radius: var(--radius-pill);
+  background: var(--coral);
+  color: var(--ink-on-accent);
+  font-size: var(--text-sm);
+}
+
+.report-section ul {
+  padding-left: 1.2em;
+  color: var(--ink-2);
+}
+
+.report-section li {
+  margin-bottom: var(--space-2);
+}
+
+.report-section p {
+  color: var(--ink-2);
+}
+
+/* Responsible AI: forced 5-across on desktop (XCH's explicit ask, 2026-07-17),
+   not the auto-fit default — falls back to single column below 900px. */
+.grid-cards-5 {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 900px) {
+  .grid-cards-5 {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+.team-list {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-2) 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
+}
+
+.team-school {
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+}
+
+.one-more-thing {
+  margin: var(--space-12) 0;
+}
+
+.one-more-thing summary {
+  cursor: pointer;
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+}
+
+.one-more-thing summary:hover {
+  color: var(--coral);
+}
+
+.one-more-thing figure {
+  margin: var(--space-4) 0 0;
+}
+
+.one-more-thing img {
+  border-radius: var(--radius-md);
+  max-width: min(100%, 640px);
+}
+
+.one-more-thing figcaption {
+  font-size: var(--text-xs);
+  color: var(--ink-2);
+  margin-top: var(--space-2);
+}
+
+.st7-footer {
+  border-top: var(--border-hairline);
+  padding-top: var(--space-6);
+  margin-top: var(--space-8);
+}

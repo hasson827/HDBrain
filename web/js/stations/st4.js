@@ -14,22 +14,29 @@ export function initSt4() {
   const flatTypes = listFlatTypes();
 
   root.innerHTML = `
-    <h2>ST4 &middot; Time Stop &middot; The 99-Year Clock</h2>
-    <label>Town
-      <select id="st4-town">${towns.map((t) => `<option value="${t}">${t}</option>`).join("")}</select>
-    </label>
-    <label>Flat type
-      <select id="st4-flat-type">${flatTypes.map((t) => `<option value="${t}">${t}</option>`).join("")}</select>
-    </label>
-    <label>Remaining lease: <span id="st4-lease-value">70</span> years
-      <input type="range" id="st4-lease-slider" min="30" max="99" value="70" />
-    </label>
-    <div id="st4-chart" style="width: 100%; height: 360px;"></div>
-    <p id="st4-note"></p>
+    <div class="station-inner">
+      <h2>ST4 &middot; Time Stop &middot; The 99-Year Clock</h2>
+      <p class="lede">Everything else held fixed, watch the estimate move as the lease clock runs down.</p>
+      <div class="card st4-controls cluster">
+        <label>Town
+          <select id="st4-town">${towns.map((t) => `<option value="${t}">${t}</option>`).join("")}</select>
+        </label>
+        <label>Flat type
+          <select id="st4-flat-type">${flatTypes.map((t) => `<option value="${t}">${t}</option>`).join("")}</select>
+        </label>
+        <label class="st4-slider-label">Remaining lease: <strong id="st4-lease-value">70</strong> years
+          <input type="range" id="st4-lease-slider" min="30" max="99" value="70" />
+        </label>
+      </div>
+      <div class="card">
+        <div id="st4-chart" style="width: 100%; height: 380px;"></div>
+        <p class="disclosure" id="st4-note"></p>
+      </div>
+    </div>
   `;
 
   const chartEl = document.getElementById("st4-chart");
-  const chart = window.echarts.init(chartEl);
+  const chart = window.echarts.init(chartEl, "hdbrain-dark");
 
   const townSelect = document.getElementById("st4-town");
   const flatTypeSelect = document.getElementById("st4-flat-type");
@@ -59,16 +66,23 @@ export function initSt4() {
     // changes the text below, and the chart itself looks frozen (real bug found during
     // S1 manual testing: the chart's own series data never depended on `lease` at all).
     chart.setOption({
-      xAxis: { type: "category", data: leases, name: "Remaining lease (years)", inverse: true },
-      yAxis: { type: "value", name: "Predicted price (SGD)" },
+      grid: { top: 60, left: 70, right: 30, bottom: 70 },
+      xAxis: {
+        type: "category", data: leases, inverse: true,
+        name: "Remaining lease (years)", nameLocation: "middle", nameGap: 32,
+      },
+      yAxis: {
+        type: "value", name: "Predicted price (SGD)",
+        nameLocation: "middle", nameGap: 55,
+      },
       series: [
         {
           type: "line", data: prices, name: "Predicted price",
           markLine: idx >= 0 ? {
             symbol: "none",
             silent: true,
-            label: { formatter: () => `${lease}y` },
-            lineStyle: { color: "#666" },
+            label: { formatter: () => `${lease}y`, color: "#93A1B5" },
+            lineStyle: { color: "#FF6B6B", type: "dashed" },
             data: [{ xAxis: idx }],
           } : undefined,
         },

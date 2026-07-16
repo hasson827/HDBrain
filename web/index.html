@@ -3,41 +3,74 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>HDBrain — Find your home on the Little Red Dot</title>
+<title>HDBrain — All aboard the HDBrain Line</title>
+<link rel="stylesheet" href="./css/tokens.css" />
 <link rel="stylesheet" href="./css/base.css" />
+<link rel="stylesheet" href="./css/nav.css" />
+<link rel="stylesheet" href="./css/stations.css" />
 </head>
 <body>
 <nav id="top-nav"></nav>
 
-<section id="st0-departure">
-  <h1>ST0 &middot; Find your home on the Little Red Dot.</h1>
-  <p>HDBrain turns 981,450 real transactions into answers to the three questions
-     every Singapore homebuyer asks.</p>
+<section id="st0-departure" class="st0">
+  <div class="station-inner st0-grid">
+    <div class="st0-copy">
+      <p class="eyebrow">HDBrain &middot; ST0 &middot; Departure</p>
+      <h1>All aboard <span class="accent">the HDBrain Line.</span></h1>
+      <p class="lede">HDBrain turns <strong>981,450</strong> real transactions into answers
+         to the three questions every Singapore homebuyer asks.</p>
+      <a class="scroll-cue" href="#st1-questions">Scroll to begin <span aria-hidden="true">&darr;</span></a>
+    </div>
+    <div class="st0-planet">
+      <img src="./static/img/planet.png" width="1254" height="1254"
+           alt="A small stylized planet made of Singapore's skyline: Marina Bay Sands, the
+                Flyer, Supertrees, and shophouses ringing a green, water-filled world." />
+    </div>
+  </div>
 </section>
 
-<section id="st1-questions">
-  <h2>ST1 &middot; Three Questions</h2>
-  <p>Every homebuyer's journey comes down to three questions. Each one needs a
-     different piece of information from you &mdash; here's why, and where to answer it.</p>
-  <article>
-    <h3>What can we afford?</h3>
-    <p>Tell us your household income, savings, and loan preferences. We'll calculate your
-       maximum budget under MSR/TDSR rules and show you which towns fit.</p>
-    <a href="#st2-budget">Go to Budget Stop &rarr;</a>
-  </article>
-  <article>
-    <h3>What is this flat really worth?</h3>
-    <p>Give us a flat's town, floor, size, and remaining lease. We'll value it against
-       981,450 real HDB transactions, with a confidence interval and a SHAP breakdown of
-       what drove the number.</p>
-    <a href="#st3-valuation">Go to Valuation Stop &rarr;</a>
-  </article>
-  <article>
-    <h3>Should we buy now?</h3>
-    <p>See how prices are moving in your target towns, and how the model behind these
-       valuations actually performs against real, held-out data.</p>
-    <a href="#st5-market">Go to Lookout &rarr;</a>
-  </article>
+<section id="st1-questions" class="st1">
+  <div class="station-inner">
+    <h2>ST1 &middot; Three Questions</h2>
+    <p class="lede">Every homebuyer's journey comes down to three questions. Each one needs a
+       different piece of information from you &mdash; here's why, and where to answer it.</p>
+    <div class="question-cards">
+      <article class="question-card">
+        <svg class="question-icon" viewBox="0 0 64 64" aria-hidden="true">
+          <rect x="12" y="20" width="40" height="28" rx="4" fill="none" stroke="currentColor" stroke-width="3"/>
+          <path d="M12 30 H52" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="42" cy="39" r="3" fill="currentColor"/>
+        </svg>
+        <h3>What can we afford?</h3>
+        <p>Tell us your household income, savings, and loan preferences. We'll calculate your
+           maximum budget under MSR/TDSR rules and show you which towns fit.</p>
+        <a href="#st2-budget">Go to Budget Stop &rarr;</a>
+      </article>
+      <article class="question-card">
+        <svg class="question-icon" viewBox="0 0 64 64" aria-hidden="true">
+          <path d="M32 14 L24 22 C16 26 12 34 12 40 C12 48 20 52 32 52 C44 52 52 48 52 40 C52 34 48 26 40 22 Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M22 22 H42" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+          <text x="32" y="42" text-anchor="middle" font-size="16" font-weight="700" fill="currentColor" style="font-family: var(--font-display)">$</text>
+        </svg>
+        <h3>What is this flat really worth?</h3>
+        <p>Give us a flat's town, floor, size, and remaining lease. We'll value it against
+           981,450 real HDB transactions, with a confidence interval and a SHAP breakdown of
+           what drove the number.</p>
+        <a href="#st3-valuation">Go to Valuation Stop &rarr;</a>
+      </article>
+      <article class="question-card">
+        <svg class="question-icon" viewBox="0 0 64 64" aria-hidden="true">
+          <circle cx="32" cy="32" r="20" fill="none" stroke="currentColor" stroke-width="3"/>
+          <path d="M32 14 V19 M32 45 V50 M14 32 H19 M45 32 H50" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path d="M32 32 L32 20 M32 32 L42 36" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+        <h3>Should we buy now?</h3>
+        <p>See how prices are moving in your target towns, and how the model behind these
+           valuations actually performs against real, held-out data.</p>
+        <a href="#st5-market">Go to Lookout &rarr;</a>
+      </article>
+    </div>
+  </div>
 </section>
 
 <section id="st2-budget"></section>

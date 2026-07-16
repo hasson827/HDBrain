@@ -13,19 +13,28 @@ export function initSt5() {
   const towns = listTowns();
 
   root.innerHTML = `
-    <h2>ST5 &middot; Lookout &middot; Market Pulse</h2>
-    <label>Town
-      <select id="st5-town">${towns.map((t) => `<option value="${t}">${t}</option>`).join("")}</select>
-    </label>
-    <div id="st5-chart" style="width: 100%; height: 360px;"></div>
-    <p id="st5-chart-note"></p>
-    <h3>Latest median price by town</h3>
-    <table id="st5-ranking" border="1" cellpadding="4"></table>
-    <p>Note: LIM CHU KANG is excluded from this list &mdash; it has no recorded resale
-       transactions after 2015 in this dataset.</p>
+    <div class="station-inner">
+      <h2>ST5 &middot; Lookout &middot; Market Pulse</h2>
+      <p class="lede">How prices in a town have actually moved, month by month, since 2015.</p>
+      <div class="card">
+        <label class="chart-station-controls">Town
+          <select id="st5-town">${towns.map((t) => `<option value="${t}">${t}</option>`).join("")}</select>
+        </label>
+        <div id="st5-chart" style="width: 100%; height: 380px;"></div>
+        <p class="disclosure" id="st5-chart-note"></p>
+      </div>
+      <details class="disclosure-block card">
+        <summary>Latest median price by town <span id="st5-ranking-count"></span></summary>
+        <div style="overflow-x:auto;">
+          <table id="st5-ranking"></table>
+        </div>
+        <p class="disclosure">Note: LIM CHU KANG is excluded from this list &mdash; it has no recorded resale
+           transactions after 2015 in this dataset.</p>
+      </details>
+    </div>
   `;
 
-  const chart = window.echarts.init(document.getElementById("st5-chart"));
+  const chart = window.echarts.init(document.getElementById("st5-chart"), "hdbrain-dark");
   const townSelect = document.getElementById("st5-town");
   const chartNote = document.getElementById("st5-chart-note");
 
@@ -66,4 +75,5 @@ function renderRanking(towns) {
     .join("");
   document.getElementById("st5-ranking").innerHTML =
     `<thead><tr><th>Town</th><th>Latest month</th><th>Median price</th></tr></thead><tbody>${rows}</tbody>`;
+  document.getElementById("st5-ranking-count").textContent = `(${latest.length} towns)`;
 }

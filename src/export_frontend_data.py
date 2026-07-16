@@ -36,7 +36,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from src.affordability.mapper import build_representative_profiles
-from src.data.build_dataset import REGION_MAP, STOREY_ORDER
+from src.data.build_dataset import MODEL_MAP, REGION_MAP, STOREY_ORDER
 from src.models import get_feature_columns, load_data
 
 MODEL_DIR = ROOT / "models"
@@ -229,8 +229,9 @@ def export_comparables() -> None:
     wide = pd.read_csv(
         DATA_DIR / "processed" / "hdb_resale_model_dataset.csv",
         usecols=["month", "town", "flat_type", "storey_range", "floor_area_sqm",
-                 "remaining_lease", "flat", "resale_price"],
+                 "remaining_lease", "flat", "resale_price", "flat_model"],
     )
+    wide["flat_model_group"] = wide["flat_model"].map(MODEL_MAP).fillna("Special")
     wide["month"] = pd.to_datetime(wide["month"])
     cutoff = wide["month"].max() - pd.DateOffset(months=12)
     recent = wide[wide["month"] > cutoff]
@@ -248,6 +249,7 @@ def export_comparables() -> None:
                 "floor_area_sqm": round(float(row["floor_area_sqm"]), 1),
                 "remaining_lease": round(float(row["remaining_lease"]), 1),
                 "resale_price": round(float(row["resale_price"]), 0),
+                "flat_model_group": row["flat_model_group"],
             }
             for _, row in sample.iterrows()
         ]

@@ -1,10 +1,14 @@
 /**
- * ST3 Valuation Stop (README_XCH §7.3 ST3 / §8 S1 task 6). S1 scope: form ->
- * point estimate + 90% interval + SHAP top-6 as a text list + a comparables
- * text table. No blueprint SVG, no waterfall animation — those are S2/S3.
+ * ST3 Valuation Stop (README_XCH §7.3 ST3 / §8 S2 tasks 4/6a). S2 scope: glass
+ * form + result card, a CSS interval "bracket" replacing the plain text range,
+ * static SHAP bars, and a comparables card flow using the 6 flat-model icons
+ * (§7.12) instead of a text table. The blueprint SVG that redraws on every
+ * form change, and the animated SHAP fly-in, are S3 (§8 S3 task 6).
  */
 import { listTowns, listFlatTypes, listStoreyOptions, queryValuation, queryShapTop6, queryComparables, queryGridBase } from "../engine/valuation.js";
 import { recordValuation } from "../state.js";
+import { flatIconSvg } from "../flat-icons.js";
+import { highlightTown } from "../map.js";
 
 export function initSt3() {
   const root = document.getElementById("st3-valuation");
@@ -14,29 +18,36 @@ export function initSt3() {
   const flatTypes = listFlatTypes();
 
   root.innerHTML = `
-    <h2>ST3 &middot; Valuation Stop &middot; What is this flat worth?</h2>
-    <p class="disclosure">Estimates are based on training data up to 2023; recent (2025) resale
-      prices ran 9&ndash;16% above these estimates during the upside market (see the Model Arena
-      for details).</p>
-    <form id="st3-form">
-      <label>Town
-        <select name="town">${towns.map((t) => `<option value="${t}">${t}</option>`).join("")}</select>
-      </label>
-      <label>Flat type
-        <select name="flatType">${flatTypes.map((t) => `<option value="${t}">${t}</option>`).join("")}</select>
-      </label>
-      <label>Storey range
-        <select name="storeyRangeCode"></select>
-      </label>
-      <label>Floor area (sqm)
-        <input type="number" name="floorAreaSqm" min="20" max="300" step="any" required />
-      </label>
-      <label>Remaining lease (years)
-        <input type="number" name="remainingLease" min="30" max="99" step="any" required />
-      </label>
-      <button type="submit">Value this flat</button>
-    </form>
-    <div id="st3-result"></div>
+    <div class="station-inner st3-layout">
+      <div class="card glass st3-form-card">
+        <h2>ST3 &middot; Valuation Stop &middot; What is this flat worth?</h2>
+        <p class="disclosure">Estimates are based on training data up to 2023; recent (2025) resale
+          prices ran 9&ndash;16% above these estimates during the upside market (see the Model Arena
+          for details).</p>
+        <form id="st3-form">
+          <label>Town
+            <select name="town">${towns.map((t) => `<option value="${t}">${t}</option>`).join("")}</select>
+          </label>
+          <label>Flat type
+            <select name="flatType">${flatTypes.map((t) => `<option value="${t}">${t}</option>`).join("")}</select>
+          </label>
+          <label>Storey range
+            <select name="storeyRangeCode"></select>
+          </label>
+          <label>Floor area (sqm)
+            <input type="number" name="floorAreaSqm" min="20" max="300" step="any" required />
+          </label>
+          <label>Remaining lease (years)
+            <input type="number" name="remainingLease" min="30" max="99" step="any" required />
+          </label>
+          <button type="submit">Value this flat</button>
+        </form>
+      </div>
+      <div class="stack">
+        <div id="st3-result" class="card"><p class="lede">Fill in the form to value a flat.</p></div>
+        <div id="st3-comparables"></div>
+      </div>
+    </div>
   `;
 
   const form = document.getElementById("st3-form");
@@ -46,9 +57,6 @@ export function initSt3() {
   const floorAreaInput = form.querySelector('[name="floorAreaSqm"]');
   const remainingLeaseInput = form.querySelector('[name="remainingLease"]');
 
-  // Prefill floor area / remaining lease from the grid's own representative row for
-  // the selected group, rather than one fixed default for every flat type — a 1-ROOM
-  // flat and an EXECUTIVE flat have very different realistic floor areas.
   function refreshBaseDefaults() {
     const base = queryGridBase({
       town: townSelect.value, flatType: flatTypeSelect.value,
@@ -70,6 +78,12 @@ export function initSt3() {
   storeySelect.addEventListener("change", refreshBaseDefaults);
   refreshStoreyOptions();
 
+  // Cross-station link from ST2's map click-through (§7.9.2 "预填镇名跳 ST3").
+  window.addEventListener("hdbrain:focus-town", (e) => {
+    townSelect.value = e.detail.town;
+    refreshStoreyOptions();
+  });
+
   form.addEventListener("submit", (e) => {
     e.preventDefault();
     const fd = new FormData(form);
@@ -88,29 +102,73 @@ export function initSt3() {
     recordValuation(result);
     const shapTop6 = queryShapTop6(query);
     const comparables = queryComparables(query);
-    renderResult(result, shapTop6, comparables);
+    renderResult(result, shapTop6);
+    renderComparables(query.town, comparables);
   });
 }
 
-function renderResult(result, shapTop6, comparables) {
-  const shapList = shapTop6
-    .map((f) => `<li>${f.feature}: ${f.value_sgd >= 0 ? "+" : ""}S$${Math.round(f.value_sgd).toLocaleString("en-SG")}</li>`)
-    .join("");
-  const compRows = comparables
-    .slice(0, 20)
-    .map((c) => `<tr><td>${c.month}</td><td>${c.flat}</td><td>${c.storey_range}</td><td>${c.floor_area_sqm}</td><td>${c.remaining_lease}</td><td>S$${Math.round(c.resale_price).toLocaleString("en-SG")}</td></tr>`)
+function renderResult(result, shapTop6) {
+  const { predictedPrice, q05, q95 } = result;
+  const pct = q95 > q05 ? ((predictedPrice - q05) / (q95 - q05)) * 100 : 50;
+  const maxAbs = Math.max(...shapTop6.map((f) => Math.abs(f.value_sgd)), 1);
+
+  const shapRows = shapTop6
+    .map((f) => {
+      const isPositive = f.value_sgd >= 0;
+      const width = (Math.abs(f.value_sgd) / maxAbs) * 100;
+      return `
+        <li class="shap-row">
+          <span class="shap-label">${f.feature}</span>
+          <span class="shap-bar-track"><span class="shap-bar ${isPositive ? "is-positive" : "is-negative"}" style="width:${width}%"></span></span>
+          <span class="shap-value ${isPositive ? "is-positive" : "is-negative"}">${isPositive ? "+" : "&minus;"}S$${Math.round(Math.abs(f.value_sgd)).toLocaleString("en-SG")}</span>
+        </li>`;
+    })
     .join("");
 
   document.getElementById("st3-result").innerHTML = `
-    <p><strong>Estimated price: S$${result.predictedPrice.toLocaleString("en-SG")}</strong>
-       (90% interval: S$${result.q05.toLocaleString("en-SG")} &ndash; S$${result.q95.toLocaleString("en-SG")})</p>
+    <p class="eyebrow">Estimated price</p>
+    <p class="result-figure">S$${predictedPrice.toLocaleString("en-SG")}</p>
+    <div class="interval-bar">
+      <div class="interval-track"><span class="interval-point" style="left:${pct}%"></span></div>
+      <div class="interval-labels">
+        <span>S$${q05.toLocaleString("en-SG")}</span>
+        <span class="interval-labels-mid">90% interval</span>
+        <span>S$${q95.toLocaleString("en-SG")}</span>
+      </div>
+    </div>
     <h3>Top 6 contributing features (SHAP)</h3>
-    <ul>${shapList || "<li>No SHAP data for this combination.</li>"}</ul>
-    <h3>Kopi talk: what nearby flats really sold for</h3>
-    <p>Property icons are schematic representations by flat type, not photos of the actual unit.</p>
-    <table border="1" cellpadding="4">
-      <thead><tr><th>Month</th><th>Flat</th><th>Storey</th><th>Area (sqm)</th><th>Remaining lease</th><th>Resale price</th></tr></thead>
-      <tbody>${compRows || '<tr><td colspan="6">No comparable transactions in the last 12 months for this group.</td></tr>'}</tbody>
-    </table>
+    <ul class="shap-bars">${shapRows || "<li>No SHAP data for this combination.</li>"}</ul>
   `;
+}
+
+function renderComparables(town, comparables) {
+  const container = document.getElementById("st3-comparables");
+  const cards = comparables
+    .slice(0, 20)
+    .map(
+      (c) => `
+      <div class="comp-card card">
+        ${flatIconSvg(c.flat_model_group, "comp-icon")}
+        <div>
+          <p class="comp-price">S$${Math.round(c.resale_price).toLocaleString("en-SG")}</p>
+          <p class="comp-meta">${c.storey_range} &middot; ${c.floor_area_sqm} sqm &middot; ${c.remaining_lease}y lease left</p>
+          <p class="comp-meta">${c.month}</p>
+        </div>
+      </div>`
+    )
+    .join("");
+
+  container.innerHTML = `
+    <div class="cluster comp-header">
+      <h3>Kopi talk: what nearby flats really sold for</h3>
+      <button type="button" class="btn-ghost btn-sm" id="st3-view-on-map">View on map &rarr;</button>
+    </div>
+    <p class="disclosure">Icons are schematic representations by flat model, not photos of the actual unit.</p>
+    <div class="comp-cards">${cards || '<p>No comparable transactions in the last 12 months for this group.</p>'}</div>
+  `;
+
+  document.getElementById("st3-view-on-map")?.addEventListener("click", () => {
+    highlightTown(town);
+    document.querySelector("#st2-budget")?.scrollIntoView({ behavior: "smooth" });
+  });
 }
