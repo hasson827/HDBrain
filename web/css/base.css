@@ -1,0 +1,43 @@
+/*
+ * S1 skeleton styling only (README_XCH §8 S1: "界面允许是浏览器默认样式").
+ * No colors, no fonts, no glass, no motion here — that is S2/S3. This file exists
+ * only so the 8-section layout and sticky nav are structurally usable for testing.
+ */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+#top-nav {
+  position: sticky;
+  top: 0;
+  background: white;
+  border-bottom: 1px solid #ccc;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  z-index: 10;
+}
+
+#top-nav a[aria-current="true"] {
+  font-weight: bold;
+}
+
+section {
+  min-height: 100vh;
+  padding: 2rem;
+  border-bottom: 1px dashed #ccc;
+}
+
+form label {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+table {
+  border-collapse: collapse;
+  margin-top: 1rem;
+}

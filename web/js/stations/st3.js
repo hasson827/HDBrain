@@ -1,0 +1,116 @@
+/**
+ * ST3 Valuation Stop (README_XCH §7.3 ST3 / §8 S1 task 6). S1 scope: form ->
+ * point estimate + 90% interval + SHAP top-6 as a text list + a comparables
+ * text table. No blueprint SVG, no waterfall animation — those are S2/S3.
+ */
+import { listTowns, listFlatTypes, listStoreyOptions, queryValuation, queryShapTop6, queryComparables, queryGridBase } from "../engine/valuation.js";
+import { recordValuation } from "../state.js";
+
+export function initSt3() {
+  const root = document.getElementById("st3-valuation");
+  if (!root) return;
+
+  const towns = listTowns();
+  const flatTypes = listFlatTypes();
+
+  root.innerHTML = `
+    <h2>ST3 &middot; Valuation Stop &middot; What is this flat worth?</h2>
+    <p class="disclosure">Estimates are based on training data up to 2023; recent (2025) resale
+      prices ran 9&ndash;16% above these estimates during the upside market (see the Model Arena
+      for details).</p>
+    <form id="st3-form">
+      <label>Town
+        <select name="town">${towns.map((t) => `<option value="${t}">${t}</option>`).join("")}</select>
+      </label>
+      <label>Flat type
+        <select name="flatType">${flatTypes.map((t) => `<option value="${t}">${t}</option>`).join("")}</select>
+      </label>
+      <label>Storey range
+        <select name="storeyRangeCode"></select>
+      </label>
+      <label>Floor area (sqm)
+        <input type="number" name="floorAreaSqm" min="20" max="300" step="any" required />
+      </label>
+      <label>Remaining lease (years)
+        <input type="number" name="remainingLease" min="30" max="99" step="any" required />
+      </label>
+      <button type="submit">Value this flat</button>
+    </form>
+    <div id="st3-result"></div>
+  `;
+
+  const form = document.getElementById("st3-form");
+  const townSelect = form.querySelector('[name="town"]');
+  const flatTypeSelect = form.querySelector('[name="flatType"]');
+  const storeySelect = form.querySelector('[name="storeyRangeCode"]');
+  const floorAreaInput = form.querySelector('[name="floorAreaSqm"]');
+  const remainingLeaseInput = form.querySelector('[name="remainingLease"]');
+
+  // Prefill floor area / remaining lease from the grid's own representative row for
+  // the selected group, rather than one fixed default for every flat type — a 1-ROOM
+  // flat and an EXECUTIVE flat have very different realistic floor areas.
+  function refreshBaseDefaults() {
+    const base = queryGridBase({
+      town: townSelect.value, flatType: flatTypeSelect.value,
+      storeyRangeCode: Number(storeySelect.value),
+    });
+    if (base) {
+      floorAreaInput.value = base.floor_area_sqm;
+      remainingLeaseInput.value = Math.round(base.remaining_lease);
+    }
+  }
+
+  function refreshStoreyOptions() {
+    const options = listStoreyOptions(townSelect.value, flatTypeSelect.value);
+    storeySelect.innerHTML = options.map((o) => `<option value="${o.code}">${o.label}</option>`).join("");
+    refreshBaseDefaults();
+  }
+  townSelect.addEventListener("change", refreshStoreyOptions);
+  flatTypeSelect.addEventListener("change", refreshStoreyOptions);
+  storeySelect.addEventListener("change", refreshBaseDefaults);
+  refreshStoreyOptions();
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const fd = new FormData(form);
+    const query = {
+      town: fd.get("town"),
+      flatType: fd.get("flatType"),
+      storeyRangeCode: Number(fd.get("storeyRangeCode")),
+      floorAreaSqm: Number(fd.get("floorAreaSqm")),
+      remainingLease: Number(fd.get("remainingLease")),
+    };
+    const result = queryValuation(query);
+    if (!result) {
+      document.getElementById("st3-result").innerHTML = "<p>No grid data for this combination.</p>";
+      return;
+    }
+    recordValuation(result);
+    const shapTop6 = queryShapTop6(query);
+    const comparables = queryComparables(query);
+    renderResult(result, shapTop6, comparables);
+  });
+}
+
+function renderResult(result, shapTop6, comparables) {
+  const shapList = shapTop6
+    .map((f) => `<li>${f.feature}: ${f.value_sgd >= 0 ? "+" : ""}S$${Math.round(f.value_sgd).toLocaleString("en-SG")}</li>`)
+    .join("");
+  const compRows = comparables
+    .slice(0, 20)
+    .map((c) => `<tr><td>${c.month}</td><td>${c.flat}</td><td>${c.storey_range}</td><td>${c.floor_area_sqm}</td><td>${c.remaining_lease}</td><td>S$${Math.round(c.resale_price).toLocaleString("en-SG")}</td></tr>`)
+    .join("");
+
+  document.getElementById("st3-result").innerHTML = `
+    <p><strong>Estimated price: S$${result.predictedPrice.toLocaleString("en-SG")}</strong>
+       (90% interval: S$${result.q05.toLocaleString("en-SG")} &ndash; S$${result.q95.toLocaleString("en-SG")})</p>
+    <h3>Top 6 contributing features (SHAP)</h3>
+    <ul>${shapList || "<li>No SHAP data for this combination.</li>"}</ul>
+    <h3>Kopi talk: what nearby flats really sold for</h3>
+    <p>Property icons are schematic representations by flat type, not photos of the actual unit.</p>
+    <table border="1" cellpadding="4">
+      <thead><tr><th>Month</th><th>Flat</th><th>Storey</th><th>Area (sqm)</th><th>Remaining lease</th><th>Resale price</th></tr></thead>
+      <tbody>${compRows || '<tr><td colspan="6">No comparable transactions in the last 12 months for this group.</td></tr>'}</tbody>
+    </table>
+  `;
+}
