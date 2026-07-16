@@ -148,26 +148,63 @@ st_folium(m, width=700, height=500)
 | 字段 | Streamlit 控件 | 类型 | 默认值 | 校验规则 |
 |---|---|---|---|---|
 | 家庭月收入 | `st.number_input` | `float` | `8000` | `> 0` |
-| 首付比例 | `st.slider` | `float` | `0.10` | `[0.05, 1.0]` |
-| 贷款年利率 | `st.number_input` | `float` | `0.026` | `>= 0` |
+| 贷款类型 | `st.radio` / `st.selectbox` | `str` | `"HDB 组屋贷款"` | `hdb` / `bank` |
+| 首付比例 | `st.slider` | `float` | `0.25` | `[0.05, 1.0]` |
+| 贷款年利率 | `st.number_input` | `float` | `0.026`（HDB）/ `0.035`（银行） | `>= 0` |
 | 贷款年限 | `st.slider` | `int` | `25` | `[5, 35]` |
 | MSR 上限 | `st.slider` | `float` | `0.30` | `[0.1, 1.0]` |
+| TDSR 上限 | `st.slider` | `float` | `0.55` | `[0.1, 1.0]` |
+| 现有月债务 | `st.number_input` | `float` | `0` | `>= 0` |
 | CPF 可用金额 | `st.number_input` | `float` | `0` | `>= 0` |
 | 偏好房型 | `st.multiselect` | `List[str]` | 全部 | 从 `df["flat_type"].unique()` 取值 |
 | 偏好区域 | `st.multiselect` | `List[str]` | 全部 | 从 `df["town"].unique()` 取值 |
 
+> **政策说明**：自 2024 年 8 月起，HDB 组屋贷款 LTV 上限为 75%，即最低首付 25%。银行贷款利率通常高于 HDB 优惠利率 2.6%，前端默认使用 3.5%（用户可手动调整）。MSR 上限 30%，TDSR 上限 55%。
+
 ### 5.2 转换为 `BuyerProfile`
+
+推荐根据贷款类型使用便利工厂函数：
 
 ```python
 from src.affordability.user_profile import BuyerProfile
 
+if loan_type == "hdb":
+    profile = BuyerProfile.for_hdb_loan(
+        monthly_income=monthly_income,
+        downpayment_pct=downpayment_pct,
+        interest_rate=interest_rate,
+        tenure_years=tenure_years,
+        msr_limit=msr_limit,
+        tdsr_limit=tdsr_limit,
+        existing_debt_monthly=existing_debt_monthly,
+        cpf_available=cpf_available,
+    )
+else:
+    profile = BuyerProfile.for_bank_loan(
+        monthly_income=monthly_income,
+        interest_rate=interest_rate,
+        downpayment_pct=downpayment_pct,
+        tenure_years=tenure_years,
+        msr_limit=msr_limit,
+        tdsr_limit=tdsr_limit,
+        existing_debt_monthly=existing_debt_monthly,
+        cpf_available=cpf_available,
+    )
+```
+
+或直接实例化（默认值已按当前 HDB 政策设置）：
+
+```python
 profile = BuyerProfile(
     monthly_income=monthly_income,
     downpayment_pct=downpayment_pct,
     interest_rate=interest_rate,
     tenure_years=tenure_years,
     msr_limit=msr_limit,
+    tdsr_limit=tdsr_limit,
+    existing_debt_monthly=existing_debt_monthly,
     cpf_available=cpf_available,
+    loan_type=loan_type,  # "hdb" or "bank"
 )
 ```
 
@@ -192,15 +229,25 @@ metrics = affordability_metrics(predicted_price, profile)
 | 字段 | 含义 | 单位 |
 |---|---|---|
 | `predicted_price` | 模型预测房价 | SGD |
-| `max_affordable_price` | 在该用户 MSR 约束下的最高可负担房价 | SGD |
+| `max_affordable_price` | 在该用户 MSR/TDSR/首付约束下的最高可负担房价 | SGD |
 | `monthly_payment` | 等额本息月供 | SGD/月 |
-| `pti` | Payment-to-Income = 月供 / 月收入 | 比例 |
+| `monthly_income` | 家庭月收入 | SGD/月 |
+| `existing_debt_monthly` | 现有月债务 | SGD/月 |
+| `msr` | Mortgage Servicing Ratio = 月供 / 月收入 | 比例 |
+| `msr_limit` | MSR 上限 | 比例 |
+| `tdsr` | Total Debt Servicing Ratio = (月供 + 现有债务) / 月收入 | 比例 |
+| `tdsr_limit` | TDSR 上限 | 比例 |
+| `pti` | Payment-to-Income = 月供 / 月收入（与 MSR 同义） | 比例 |
 | `price_to_annual_income` | 房价 / 年收入 | 倍数 |
 | `downpayment` | 首付金额 | SGD |
+| `downpayment_pct` | 首付比例 | 比例 |
+| `loan_amount` | 贷款本金 | SGD |
+| `loan_to_value` | 贷款价值比 LTV = 贷款本金 / 房价 | 比例 |
 | `stamp_duty` | 买方印花税 BSD | SGD |
 | `total_upfront_cash` | 首付 + 印花税 − CPF | SGD |
-| `affordable` | 是否可负担（`monthly_payment <= income * msr`） | bool |
+| `affordable` | 是否可负担（满足 MSR、TDSR 且房价不超过最高可负担价） | bool |
 | `affordability_gap` | 预测房价 − 最高可负担房价 | SGD（负值表示可负担） |
+| `loan_type` | 贷款类型 | `"hdb"` / `"bank"` |
 
 ### 6.3 Streamlit 展示示例
 

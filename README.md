@@ -1,6 +1,6 @@
 # HDBrain
 
-A tool for predicting Singapore housing prices and providing home-buying advice to residents. This is the final project of our team in NUS Summer Workshop.
+A tool for predicting Singapore HDB resale prices and providing home-buying affordability advice. This is the final project of our team in the NUS Summer Workshop.
 
 ## Large files
 
@@ -43,39 +43,12 @@ python src/run_pipeline.py
 
 # Run affordability engine
 python src/run_affordability.py
+
+# Run unit tests
+pytest
 ```
 
 After running, model artifacts will be in `models/` and all metrics/plots in `outputs/`.
-
-### 4. Configure environment variables (optional)
-
-```bash
-cp .env.example .env
-# Edit .env to set your preferred Ollama model
-```
-
-### 5. Start Ollama locally
-
-- Download and install [Ollama](https://ollama.com/).
-- Pull a model, for example:
-
-```bash
-ollama pull qwen3.5:9b-mlx
-```
-
-- Keep the Ollama service running.
-
-### 6. Run the Streamlit app
-
-```bash
-streamlit run src/app/Home.py
-```
-
-### 7. Run tests
-
-```bash
-pytest
-```
 
 ## Project Structure
 
@@ -88,16 +61,13 @@ HDBrain/
 ├── reference/          # Reference materials (not tracked)
 ├── src/                # Source code
 │   ├── affordability/  # Affordability engine
-│   ├── app/            # Streamlit app
 │   ├── data/           # Data preprocessing and dataset builder
 │   ├── experiment/     # Feature ablation experiments
-│   ├── llm/            # LLM-related code
 │   ├── models/         # Model training scripts
 │   ├── run_affordability.py
 │   ├── run_explain.py
 │   └── run_pipeline.py
 ├── tests/              # Unit tests
-├── config.yaml         # Project configuration
 ├── environment.yml     # Conda environment
 ├── requirements.txt    # Python dependencies
 └── README.md
@@ -107,3 +77,4 @@ HDBrain/
 
 - The Random Forest model is very large due to full-depth trees. If disk space is a concern, consider reducing `n_estimators` or `max_depth` in `src/models/random_forest.py`.
 - Prediction intervals from the quantile model are calibrated on the 2017–2023 distribution; coverage on 2024 data is low due to price inflation drift. See `docs/streamlit_interface.md` for the Streamlit app interface spec.
+- The affordability engine uses a default 25% downpayment and a 30% Mortgage Servicing Ratio (MSR) limit, consistent with current HDB concessionary-loan rules. See `src/affordability/` for the full calculation logic.
