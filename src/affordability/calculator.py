@@ -70,8 +70,21 @@ def max_loan_from_payment(monthly_payment: float, interest_rate: float, tenure_y
     return float(loan)
 
 
+def _validate_profile(profile: BuyerProfile) -> None:
+    """Validate profile parameters."""
+    if not 0 <= profile.downpayment_pct < 1.0:
+        raise ValueError("downpayment_pct must be in [0, 1)")
+    if profile.loan_type not in ("hdb", "bank"):
+        raise ValueError("loan_type must be 'hdb' or 'bank'")
+    if profile.msr_limit <= 0 or profile.msr_limit > 1:
+        raise ValueError("msr_limit must be in (0, 1]")
+    if profile.tdsr_limit <= 0 or profile.tdsr_limit > 1:
+        raise ValueError("tdsr_limit must be in (0, 1]")
+
+
 def max_affordable_price(profile: BuyerProfile) -> float:
-    """Maximum property price affordable under the given MSR and downpayment constraints."""
+    """Maximum property price affordable under MSR, TDSR, and downpayment constraints."""
+    _validate_profile(profile)
     max_monthly = profile.max_monthly_payment()
     max_loan = max_loan_from_payment(max_monthly, profile.interest_rate, profile.tenure_years)
     if profile.downpayment_pct >= 1.0:
@@ -81,6 +94,7 @@ def max_affordable_price(profile: BuyerProfile) -> float:
 
 def affordability_metrics(price: float, profile: BuyerProfile) -> Dict[str, float]:
     """Return a dictionary of affordability metrics for a given property price."""
+    _validate_profile(profile)
     monthly_pay = monthly_mortgage(
         price,
         profile.downpayment_pct,
@@ -88,21 +102,35 @@ def affordability_metrics(price: float, profile: BuyerProfile) -> Dict[str, floa
         profile.tenure_years,
     )
     downpayment = price * profile.downpayment_pct
+    loan_amount = price - downpayment
     sd = stamp_duty(price)
     total_upfront = max(0.0, downpayment + sd - profile.cpf_available)
     max_price = max_affordable_price(profile)
     gap = price - max_price
+    total_debt = monthly_pay + profile.existing_debt_monthly
+
+    msr = monthly_pay / profile.monthly_income if profile.monthly_income > 0 else float("inf")
+    tdsr = total_debt / profile.monthly_income if profile.monthly_income > 0 else float("inf")
 
     return {
         "price": price,
         "max_affordable_price": max_price,
         "monthly_payment": monthly_pay,
         "monthly_income": profile.monthly_income,
-        "pti": monthly_pay / profile.monthly_income if profile.monthly_income > 0 else float("inf"),
+        "existing_debt_monthly": profile.existing_debt_monthly,
+        "msr": msr,
+        "msr_limit": profile.msr_limit,
+        "tdsr": tdsr,
+        "tdsr_limit": profile.tdsr_limit,
+        "pti": msr,
         "price_to_annual_income": price / (profile.monthly_income * 12) if profile.monthly_income > 0 else float("inf"),
         "downpayment": downpayment,
+        "downpayment_pct": profile.downpayment_pct,
+        "loan_amount": loan_amount,
+        "loan_to_value": loan_amount / price if price > 0 else 0.0,
         "stamp_duty": sd,
         "total_upfront_cash": total_upfront,
-        "affordable": monthly_pay <= profile.max_monthly_payment(),
+        "affordable": (monthly_pay <= profile.max_monthly_payment()) and (price <= max_price),
         "affordability_gap": gap,
+        "loan_type": profile.loan_type,
     }

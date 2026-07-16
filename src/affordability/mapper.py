@@ -20,14 +20,6 @@ MODEL_PATH = ROOT / "models" / "xgboost_model.joblib"
 GROUP_COLS = ["town", "flat_type", "storey_range_code"]
 
 
-def _aggregate_dummies(df: pd.DataFrame, prefix: str) -> pd.Series:
-    """For one-hot encoded columns, pick the category with the highest mean."""
-    cols = [c for c in df.columns if c.startswith(prefix)]
-    if not cols:
-        return pd.Series(np.nan, index=df.index)
-    return df[cols].idxmax(axis=1)
-
-
 def build_representative_profiles(df: pd.DataFrame, current_year: Optional[int] = None) -> pd.DataFrame:
     """Aggregate the full dataset into representative (town, flat_type, storey) profiles.
 
@@ -57,20 +49,30 @@ def build_representative_profiles(df: pd.DataFrame, current_year: Optional[int] 
         "num_supermarket_2km",
     ]
 
-    agg = {}
-    for col in numeric_cols:
-        if col in df.columns:
-            agg[col] = "median"
-
-    # Region/model dummies: take the most common category per group
-    region_cols = [c for c in df.columns if c.startswith("region_")]
-    model_cols = [c for c in df.columns if c.startswith("model_")]
-    if region_cols:
-        agg.update({c: "max" for c in region_cols})
-    if model_cols:
-        agg.update({c: "max" for c in model_cols})
-
+    agg = {col: "median" for col in numeric_cols if col in df.columns}
     grouped = df.groupby(GROUP_COLS).agg(agg).reset_index()
+
+    # Region/model dummies: take the most common category per group.
+    # Using "max" aggregation would set multiple dummy columns to 1 simultaneously,
+    # violating one-hot semantics. Instead, compute the category with the highest
+    # proportion within each group and re-create a proper one-hot encoding.
+    for prefix in ("region_", "model_"):
+        cols = [c for c in df.columns if c.startswith(prefix)]
+        if not cols:
+            continue
+        mode_df = (
+            df.groupby(GROUP_COLS)[cols]
+            .mean()
+            .idxmax(axis=1)
+            .rename(f"{prefix}mode")
+            .reset_index()
+        )
+        for c in cols:
+            mode_df[c] = (mode_df[f"{prefix}mode"] == c).astype(int)
+        mode_df = mode_df.drop(columns=[f"{prefix}mode"])
+
+        grouped = grouped.drop(columns=cols, errors="ignore")
+        grouped = grouped.merge(mode_df, on=GROUP_COLS, how="left")
 
     # Fill in snapshot time features
     grouped["year"] = current_year
