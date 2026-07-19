@@ -47,11 +47,20 @@
   --mango: #ffd166;
   --strait-blue: #118ab2;
 
-  /* Semantic status (map "City of Lights" tiers, §7.9.2) — brightness-coded,
-     never a plain red/green pair, so the encoding survives color-blindness. */
-  --tier-plenty: #ffe9a8;
+  /* Ink color for text on a LIGHT surface (parallel to --ink-on-accent).
+     Currently only ST0's blurred "glass disc" backdrop is pale enough to
+     need it; the name doesn't assume it stays that way. */
+  --ink-on-light: #EB5637;
+
+  /* Affordability tiers for the ST2 "City of Lights" map. These were once an
+     all-brightness ramp (color-blind-safe but, per XCH, too subtle for most
+     people to read at a glance), now an intuitive traffic light: plenty=green,
+     cosy=yellow, foothold=red, none=dark/unlit. The tier still appears in each
+     marker's tooltip + aria-label, so the meaning survives for color-blind
+     readers even though hue no longer carries it alone. */
+  --tier-plenty: #35d07a;
   --tier-cosy: #ffd166;
-  --tier-foothold: #d99a3f;
+  --tier-foothold: #ff6b6b;
   --tier-off: #24314a;
 
   /* ---- Glass tokens (§7.9.4, dark variant is the only variant now) ---- */
@@ -99,14 +108,25 @@
   --border-hairline: 1px solid rgba(232, 237, 245, 0.1);
   --shadow-card: 0 12px 40px rgba(2, 6, 16, 0.35);
 
-  /* ---- Motion durations (reserved now, consumed starting S3; declared
-     here so no S3 code ever invents an ad-hoc duration) ---- */
+  /* ---- Motion spec (README §8 S3: "先写一张全站动效规范表... 所有动效从表里
+     取值, 禁止拍脑袋数值"). This is that table. Every S3 animation, CSS or JS
+     (js/motion.js mirrors these three durations + the stagger interval for
+     GSAP, which wants seconds), pulls its timing from here — nowhere else.
+       fast   (150ms) — micro feedback: hover glow, docking jolt settle
+       base   (300ms) — state changes: card/tooltip reveal, bar fill, bracket open
+       slow   (600ms) — entrances: count-up, line-drawing, one beat of a chained
+                         sequence (the ST7 finale composes several 600ms beats
+                         in one timeline rather than inventing a longer token)
+       stagger (30ms) — list rhythm: window lighting, SHAP bars, card grids
+     One ease curve for the whole site, per the same discipline. ---- */
   --duration-fast: 150ms;
   --duration-base: 300ms;
   --duration-slow: 600ms;
+  --stagger-interval: 30ms;
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 
   /* ---- z-index scale (§ Layout: never an arbitrary 999) ---- */
+  --z-spotlight: 90;
   --z-nav: 100;
   --z-tooltip: 200;
   --z-modal: 300;

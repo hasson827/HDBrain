@@ -32,7 +32,8 @@ export class TemplateProvider {
       `- Monthly household income: ${fmtMoney(p.monthlyIncome)}`,
       `- Loan type: ${p.loanType === "hdb" ? "HDB concessionary (2.6%)" : "Bank loan"}`,
       `- Downpayment: ${(p.downpaymentPct * 100).toFixed(0)}%`,
-      `- MSR limit: ${(p.msrLimit * 100).toFixed(0)}% / TDSR limit: ${(p.tdsrLimit * 100).toFixed(0)}%`,
+      `- MSR (Mortgage Servicing Ratio) limit: ${(p.msrLimit * 100).toFixed(0)}% of income / ` +
+      `TDSR (Total Debt Servicing Ratio) limit: ${(p.tdsrLimit * 100).toFixed(0)}% of income`,
       p.cashSavings != null
         ? `- Cash savings: ${fmtMoney(p.cashSavings)} (upfront-budget constraint applied)`
         : "- Cash savings: not provided (upfront-budget constraint not applied)",
@@ -91,8 +92,9 @@ export class TemplateProvider {
     return [
       "## 5. Market snapshot",
       "",
-      `Champion model: XGBoost, test R² ${arena.test_r2?.toFixed(3) ?? "n/a"}, ` +
-      `median APE ${arena.test_mape?.toFixed(1) ?? "n/a"}%.`,
+      `Champion model: XGBoost — R² ${arena.test_r2?.toFixed(3) ?? "n/a"} on unseen 2024+ sales ` +
+      `(share of price variation explained; 1 is perfect), with a median error of ` +
+      `${arena.test_mape?.toFixed(1) ?? "n/a"}% of the actual price (median APE).`,
     ].join("\n");
   }
 

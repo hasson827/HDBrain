@@ -13,6 +13,7 @@
  * task 6).
  */
 import { listTowns, queryTownMeta } from "./engine/valuation.js";
+import { getGsap, DURATION, EASE, STAGGER, prefersReducedMotion } from "./motion.js";
 
 const VIEW_W = 640;
 const VIEW_H = 440;
@@ -142,16 +143,45 @@ function hideTooltip() {
 }
 
 /** Called after computeTownAffordability() runs (README_XCH §7.9.2 four-tier
- * lighting). S2: instant class swap, no ripple/stagger — that is §8 S3 task 6. */
+ * lighting, README §8 S3 task 6: "波纹扩散...错峰30ms点亮"). Ripples outward
+ * from the island's center, one marker at a time, each getting a brief
+ * "flicker on" pulse as its tier swaps in. */
 export function updateMapTiers(tiers) {
-  for (const { town, tier } of tiers) {
-    const m = markers.get(town);
-    if (!m) continue;
-    m.g.classList.remove("tier-plenty", "tier-cosy", "tier-foothold", "tier-none");
-    m.g.classList.add(`tier-${tier}`);
-    m.tier = tier;
-    m.g.setAttribute("aria-label", `${town}: ${TIER_LABELS[tier]}`);
+  const updates = tiers
+    .map(({ town, tier }) => ({ town, tier, m: markers.get(town) }))
+    .filter((u) => u.m);
+
+  const gsap = getGsap();
+  if (!gsap || prefersReducedMotion()) {
+    for (const { town, tier, m } of updates) applyTier(m, town, tier);
+    return;
   }
+
+  const centerX = VIEW_W / 2;
+  const centerY = VIEW_H / 2;
+  const rippled = updates
+    .map((u) => ({ ...u, dist: Math.hypot(u.m.x - centerX, u.m.y - centerY) }))
+    .sort((a, b) => a.dist - b.dist);
+
+  rippled.forEach(({ town, tier, m }, i) => {
+    gsap.delayedCall(i * STAGGER, () => {
+      applyTier(m, town, tier);
+      if (tier !== "none") {
+        gsap.fromTo(
+          m.circle,
+          { scale: 1.8, transformOrigin: "center" },
+          { scale: 1, duration: DURATION.base, ease: EASE }
+        );
+      }
+    });
+  });
+}
+
+function applyTier(m, town, tier) {
+  m.g.classList.remove("tier-plenty", "tier-cosy", "tier-foothold", "tier-none");
+  m.g.classList.add(`tier-${tier}`);
+  m.tier = tier;
+  m.g.setAttribute("aria-label", `${town}: ${TIER_LABELS[tier]}`);
 }
 
 export function onMapTownSelect(cb) {

@@ -8,7 +8,12 @@
 import { listTowns, listFlatTypes, listStoreyOptions, queryValuation, queryShapTop6, queryComparables, queryGridBase } from "../engine/valuation.js";
 import { recordValuation } from "../state.js";
 import { flatIconSvg } from "../flat-icons.js";
+import { featureLabel } from "../feature-labels.js";
 import { highlightTown } from "../map.js";
+import { scrollToTarget } from "../scroll.js";
+import { getGsap, DURATION, EASE, STAGGER, prefersReducedMotion, revealOnce, popIn } from "../motion.js";
+import { scrollFloat } from "../scroll-float.js";
+import { applyGlassSurface } from "../glass-surface.js";
 
 export function initSt3() {
   const root = document.getElementById("st3-valuation");
@@ -17,39 +22,53 @@ export function initSt3() {
   const towns = listTowns();
   const flatTypes = listFlatTypes();
 
+  // Reworked per XCH (2026-07-18): title/intro separated onto their own head
+  // (like ST2), and the form redesigned — Town on its own row (its option text
+  // can be long), the four remaining inputs in a 2x2 grid at matching heights,
+  // then Value. The form starts centred (no result column). On submit the
+  // `data-valued` flag flips: the body grid animates the form to the left and
+  // the result column widens in on the right (grid-template-columns transition,
+  // same technique as ST2's explore panel).
   root.innerHTML = `
-    <div class="station-inner st3-layout">
-      <div class="card glass st3-form-card">
+    <div class="station-inner st3-layout" data-valued="false">
+      <div class="st3-head">
         <h2>ST3 &middot; Valuation Stop &middot; What is this flat worth?</h2>
         <p class="disclosure">Estimates are based on training data up to 2023; recent (2025) resale
           prices ran 9&ndash;16% above these estimates during the upside market (see the Model Arena
           for details).</p>
-        <form id="st3-form">
-          <label>Town
-            <select name="town">${towns.map((t) => `<option value="${t}">${t}</option>`).join("")}</select>
-          </label>
-          <label>Flat type
-            <select name="flatType">${flatTypes.map((t) => `<option value="${t}">${t}</option>`).join("")}</select>
-          </label>
-          <label>Storey range
-            <select name="storeyRangeCode"></select>
-          </label>
-          <label>Floor area (sqm)
-            <input type="number" name="floorAreaSqm" min="20" max="300" step="any" required />
-          </label>
-          <label>Remaining lease (years)
-            <input type="number" name="remainingLease" min="30" max="99" step="any" required />
-          </label>
-          <button type="submit">Value this flat</button>
-        </form>
       </div>
-      <div class="stack">
-        <div id="st3-result" class="card"><p class="lede">Fill in the form to value a flat.</p></div>
-        <div id="st3-comparables"></div>
+      <div class="st3-body">
+        <div class="card st3-form-card">
+          <form id="st3-form" class="st3-form">
+            <label class="st3-field-town">Town
+              <select name="town">${towns.map((t) => `<option value="${t}">${t}</option>`).join("")}</select>
+            </label>
+            <div class="st3-field-grid">
+              <label>Flat type
+                <select name="flatType">${flatTypes.map((t) => `<option value="${t}">${t}</option>`).join("")}</select>
+              </label>
+              <label>Storey range
+                <select name="storeyRangeCode"></select>
+              </label>
+              <label>Floor area (sqm)
+                <input type="number" name="floorAreaSqm" min="20" max="300" step="any" required />
+              </label>
+              <label>Remaining lease (years)
+                <input type="number" name="remainingLease" min="30" max="99" step="any" required />
+              </label>
+            </div>
+            <button type="submit" class="st3-value-btn">Value this flat</button>
+          </form>
+        </div>
+        <div class="stack st3-result-col">
+          <div id="st3-result" class="card"><p class="lede">Fill in the form to value a flat.</p></div>
+          <div id="st3-comparables"></div>
+        </div>
       </div>
     </div>
   `;
 
+  const layout = root.querySelector(".st3-layout");
   const form = document.getElementById("st3-form");
   const townSelect = form.querySelector('[name="town"]');
   const flatTypeSelect = form.querySelector('[name="flatType"]');
@@ -78,6 +97,13 @@ export function initSt3() {
   storeySelect.addEventListener("change", refreshBaseDefaults);
   refreshStoreyOptions();
 
+  revealOnce(root.querySelector(".st3-form-card"));
+
+  scrollFloat(root.querySelector(".st3-head h2"));
+  scrollFloat(root.querySelector(".st3-head .disclosure"));
+  applyGlassSurface(root.querySelector(".st3-form-card"));
+  applyGlassSurface(document.getElementById("st3-result"));
+
   // Cross-station link from ST2's map click-through (§7.9.2 "预填镇名跳 ST3").
   window.addEventListener("hdbrain:focus-town", (e) => {
     townSelect.value = e.detail.town;
@@ -104,6 +130,9 @@ export function initSt3() {
     const comparables = queryComparables(query);
     renderResult(result, shapTop6);
     renderComparables(query.town, comparables);
+    // Flip the layout from centred-form to form-left / result-right (CSS
+    // animates the grid columns). Idempotent — re-valuing just re-renders.
+    layout.dataset.valued = "true";
   });
 }
 
@@ -116,29 +145,69 @@ function renderResult(result, shapTop6) {
     .map((f) => {
       const isPositive = f.value_sgd >= 0;
       const width = (Math.abs(f.value_sgd) / maxAbs) * 100;
+      // Friendly label for display; the raw column name stays in `title` so the
+      // full/original wording survives the CSS ellipsis on narrow columns.
+      const label = featureLabel(f.feature);
       return `
         <li class="shap-row">
-          <span class="shap-label">${f.feature}</span>
-          <span class="shap-bar-track"><span class="shap-bar ${isPositive ? "is-positive" : "is-negative"}" style="width:${width}%"></span></span>
+          <span class="shap-label" title="${label} (${f.feature})">${label}</span>
+          <span class="shap-bar-track"><span class="shap-bar ${isPositive ? "is-positive" : "is-negative"}" data-width="${width}"></span></span>
           <span class="shap-value ${isPositive ? "is-positive" : "is-negative"}">${isPositive ? "+" : "&minus;"}S$${Math.round(Math.abs(f.value_sgd)).toLocaleString("en-SG")}</span>
         </li>`;
     })
     .join("");
 
-  document.getElementById("st3-result").innerHTML = `
+  const panel = document.getElementById("st3-result");
+  panel.innerHTML = `
     <p class="eyebrow">Estimated price</p>
     <p class="result-figure">S$${predictedPrice.toLocaleString("en-SG")}</p>
     <div class="interval-bar">
-      <div class="interval-track"><span class="interval-point" style="left:${pct}%"></span></div>
+      <div class="interval-track"><span class="interval-point" data-left="${pct}"></span></div>
       <div class="interval-labels">
         <span>S$${q05.toLocaleString("en-SG")}</span>
         <span class="interval-labels-mid">90% interval</span>
         <span>S$${q95.toLocaleString("en-SG")}</span>
       </div>
     </div>
-    <h3>Top 6 contributing features (SHAP)</h3>
+    <h3>What moved this estimate</h3>
     <ul class="shap-bars">${shapRows || "<li>No SHAP data for this combination.</li>"}</ul>
+    <p class="disclosure">The 90% interval is the range where the model expects 9 in 10 similar
+       flats to sell. The bars above (SHAP values &mdash; a standard way of attributing a
+       prediction to its inputs) show how much each attribute pushed this estimate up (green)
+       or down (red) versus the market-wide average.</p>
   `;
+  animateResult(panel);
+}
+
+/** README §8 S3 task 6: the interval "bracket" resolves into place (the point
+ * slides in from center rather than appearing pre-positioned) and SHAP bars
+ * fly in one by one. Falls back to setting the final CSS values directly
+ * when GSAP/reduced-motion means no animation is going to run. */
+function animateResult(panel) {
+  const point = panel.querySelector(".interval-point");
+  const bars = [...panel.querySelectorAll(".shap-bar")];
+  const gsap = getGsap();
+
+  // Bars animate via scaleX (a transform), not width — their final width is
+  // set directly from data-width and never touched again, only the scale is
+  // tweened, so this stays off the layout-thrashing width/left path.
+  bars.forEach((b) => (b.style.width = `${b.dataset.width}%`));
+
+  if (!gsap || prefersReducedMotion()) {
+    if (point) point.style.left = `${point.dataset.left}%`;
+    popIn(panel);
+    return;
+  }
+
+  if (point) {
+    gsap.fromTo(point, { left: "50%", opacity: 0 }, { left: `${point.dataset.left}%`, opacity: 1, duration: DURATION.base, ease: EASE });
+  }
+  gsap.fromTo(
+    bars,
+    { scaleX: 0, transformOrigin: "left center" },
+    { scaleX: 1, duration: DURATION.base, ease: EASE, stagger: STAGGER }
+  );
+  popIn(panel);
 }
 
 function renderComparables(town, comparables) {
@@ -147,7 +216,7 @@ function renderComparables(town, comparables) {
     .slice(0, 20)
     .map(
       (c) => `
-      <div class="comp-card card">
+      <div class="comp-card card glass-surface">
         ${flatIconSvg(c.flat_model_group, "comp-icon")}
         <div>
           <p class="comp-price">S$${Math.round(c.resale_price).toLocaleString("en-SG")}</p>
@@ -169,6 +238,16 @@ function renderComparables(town, comparables) {
 
   document.getElementById("st3-view-on-map")?.addEventListener("click", () => {
     highlightTown(town);
-    document.querySelector("#st2-budget")?.scrollIntoView({ behavior: "smooth" });
+    scrollToTarget("#st2-budget");
   });
+
+  const gsap = getGsap();
+  if (gsap && !prefersReducedMotion()) {
+    const cardEls = [...container.querySelectorAll(".comp-card")];
+    gsap.fromTo(
+      cardEls,
+      { opacity: 0, y: 16 },
+      { opacity: 1, y: 0, duration: DURATION.base, ease: EASE, stagger: STAGGER }
+    );
+  }
 }

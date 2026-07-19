@@ -10,6 +10,24 @@
 /* ================= ST0 Departure ================= */
 
 .st0 {
+  /* Transparent so the fixed #starfield / #world-bg layers below show through
+     (see index.html). The landing scrub scales the planet up while this
+     section is pinned — clip it to the section's own box so it doesn't bleed
+     into whatever GSAP has pinned above/below. */
+  background: transparent;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* Night sky behind the whole hero, moved off .st0 onto a fixed layer so the
+   Buildings backdrop (#world-bg) can fade in over it during the landing. Sits
+   behind everything; ST2+ paint their own opaque backgrounds over it. */
+#starfield {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
   background-color: var(--bg-starfield);
   background-image:
     radial-gradient(1.5px 1.5px at 10% 20%, rgba(255, 255, 255, 0.8), transparent),
@@ -21,11 +39,39 @@
     radial-gradient(1.5px 1.5px at 40% 40%, rgba(255, 255, 255, 0.6), transparent);
   background-repeat: repeat;
   background-size: 340px 340px;
-  display: flex;
-  align-items: center;
+}
+
+/* The Singapore skyline (ground.png). Fixed so it STAYS put as ST0's planet +
+   intro copy scroll away — "背景保留". js/stations/st0.js fades it in during
+   the landing (over the starfield), then blurs #world-bg-img and raises
+   #world-bg-scrim as ST1 arrives (虚化 + 黑透), and fades the layer back out
+   before ST2. Default opacity 0: under no-JS / reduced-motion the hero and ST1
+   simply show the starfield, which is a fine static backdrop for the glass. */
+#world-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#world-bg-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  will-change: filter;
+}
+
+#world-bg-scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-0);
+  opacity: 0;
 }
 
 .st0-grid {
+  position: relative;
+  z-index: 1;
   width: 100%;
   display: grid;
   grid-template-columns: 1fr;
@@ -37,22 +83,43 @@
   margin-bottom: var(--space-8);
 }
 
+/* Anchored to the bottom-centre of the hero (a direct child of .st0). Its text
+   reveals character-by-character once the headline + lede have finished (see
+   js/stations/st0.js), then the arrow floats up and down forever. Clicking it
+   scrolls to the landing composition, not straight to ST1. */
 .scroll-cue {
+  position: absolute;
+  left: 50%;
+  bottom: var(--space-12);
+  transform: translateX(-50%);
+  z-index: 2;
   display: inline-flex;
+  flex-direction: column;
+  align-items: center;
   gap: var(--space-2);
   text-decoration: none;
   color: var(--ink-2);
   font-size: var(--text-sm);
-  border-bottom: 1px solid rgba(232, 237, 245, 0.3);
-  padding-bottom: var(--space-1);
+  letter-spacing: 0.04em;
+  transition: color var(--duration-base) var(--ease-out-expo);
+}
+
+.scroll-cue-text {
+  text-transform: uppercase;
+}
+
+.scroll-cue-arrow {
+  display: inline-block;
+  font-size: var(--text-lg);
+  line-height: 1;
 }
 
 .scroll-cue:hover {
   color: var(--coral);
-  border-color: var(--coral);
 }
 
 .st0-planet {
+  position: relative;
   justify-self: center;
 }
 
@@ -61,6 +128,116 @@
   height: auto;
   aspect-ratio: 1 / 1;
   border-radius: var(--radius-pill);
+  /* Soft feathered edge, not a hard circular clip — a radial mask fades the
+     last ~1/5 of the radius to transparent. This is also the landing
+     sequence's "glass disc" edge: the planet blurs (js/stations/st0.js) but
+     stays on screen, and the soft mask is what makes a blurred-but-still-
+     round shape read as frosted glass instead of a smeared square.
+     border-radius above is the fallback shape if mask support is missing. */
+  mask-image: radial-gradient(circle, black 55%, transparent 78%);
+  -webkit-mask-image: radial-gradient(circle, black 55%, transparent 78%);
+}
+
+/* The project intro lives ON the planet, not the whole viewport — it's the
+   "glass disc" from the note above, revealed once the planet has blurred and
+   ground.png has taken over as the backdrop. Hidden by default (opacity: 0
+   below) and only ever revealed by js/stations/st0.js's pin timeline — under
+   no-JS/reduced-motion it never appears, same as that timeline's other
+   flourishes (planet blur, ground crossfade); it only reinforces the hero
+   copy above, which IS always visible. `inset` is NEGATIVE on purpose: the
+   oversized composition doesn't fit inside the disc's own box, so this canvas
+   is deliberately larger than `.st0-planet`. `.st0`'s `overflow: hidden`
+   (ST0 rules above) is the backstop if any word reaches the section edge. */
+.st0-intro {
+  position: absolute;
+  inset: -35%;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Streetwear-logo composition: three separate marks, not three neat lines of
+   a sentence. Each group is a big all-caps hero word (REAL / THREE / ONE)
+   with a small caption tucked hard against it — the size and case contrast
+   is what carries the "logo". Alternating per-group alignment gives the
+   scatter; no rotation, everything stays axis-aligned. */
+.st0-intro-lines {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+.st0-intro-group {
+  display: flex;
+  align-items: baseline;
+  gap: 0.28em;
+  white-space: nowrap;
+}
+
+.st0-intro-group--a {
+  align-self: flex-start;
+  margin: 0 0 0 2%;
+}
+
+.st0-intro-group--b {
+  align-self: center;
+  margin: -0.06em 0;
+  z-index: 1;
+}
+
+.st0-intro-group--c {
+  align-self: flex-end;
+  margin: 0 4% 0 0;
+}
+
+.st0-intro-word,
+.st0-intro-rest {
+  /* The backdrop here is a blurred, shifting mix of colors, not a flat
+     surface — no single text color stays legible against all of it. A dark
+     shadow behind the glyphs is what actually keeps them readable no matter
+     what's swirling underneath at any given moment, independent of color. */
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.75), 0 0 3px rgba(0, 0, 0, 0.6);
+}
+
+/* Each hero word gets its own clamp() rather than one shared size, so the
+   three are emphasized at slightly different scales instead of a uniform
+   "big" tier (see the per-group sizes below). */
+.st0-intro-word {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 0.88;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+.st0-intro-group--a .st0-intro-word {
+  font-size: clamp(2.8rem, 6.5vw, 4.3rem);
+}
+
+.st0-intro-group--b .st0-intro-word {
+  font-size: clamp(3.3rem, 8vw, 5.6rem);
+}
+
+.st0-intro-group--c .st0-intro-word {
+  font-size: clamp(2.5rem, 5.8vw, 3.8rem);
+}
+
+.st0-intro-rest {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: clamp(1.32rem, 3vw, 1.92rem);
+}
+
+/* One flat color for the whole composition — against a backdrop this bright
+   and shifting, a single high-contrast color plus the text-shadow above wins
+   on legibility in every phase. */
+.st0-intro-word,
+.st0-intro-rest {
+  color: var(--ink-on-light);
 }
 
 @media (min-width: 900px) {
@@ -79,6 +256,12 @@
 
 /* ================= ST1 Three Questions ================= */
 
+/* Transparent so the fixed #world-bg (blurred, darkened skyline) shows through
+   as ST1's backdrop — see js/stations/st0.js's backdrop handoff. */
+.st1 {
+  background: transparent;
+}
+
 .question-cards {
   display: grid;
   grid-template-columns: 1fr;
@@ -92,9 +275,11 @@
   }
 }
 
+/* Glass panels floating over ST1's blurred skyline backdrop — the frosted
+   surface itself now comes from the shared `.glass-surface` class (unified
+   across ST1–ST4 per XCH 2026-07-18); only the card's own layout is set here. */
 .question-card {
-  border-top: var(--border-hairline);
-  padding-top: var(--space-6);
+  padding: var(--space-8) var(--space-6);
   text-align: center;
 }
 
@@ -119,28 +304,313 @@
 
 /* ================= ST2 Budget Stop ================= */
 
+/* ST2 is a top-to-bottom flow (XCH 2026-07-18): input modules on top, then
+   Calculate + the result figure, then a big full-width map — the old left-form/
+   right-map split is gone so the map can breathe. */
 .st2-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.st2-head {
+  max-width: var(--prose-max);
+}
+
+/* Input modules — bento cards. An asymmetric bento (XCH
+   2026-07-18): the two 2-field cards (income, cash) stack in a wider left
+   column, the 3-field loan card fills a taller right column spanning both rows.
+   Its extra height is intentional (a full-height side panel), so the grid reads
+   as composed rather than as three ragged equal columns. Single column on
+   mobile. */
+.st2-modules {
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--space-8);
+  gap: var(--space-6);
+}
+
+@media (min-width: 760px) {
+  .st2-modules {
+    grid-template-columns: 1.4fr 1fr;
+    align-items: stretch;
+  }
+  .st2-mod-income {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .st2-mod-savings {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .st2-mod-loan {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+}
+
+.bento-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-1);
+  border: var(--border-hairline);
+  border-radius: var(--radius-md);
+  padding: var(--space-6);
+  overflow: hidden;
+  transition: transform var(--duration-base) var(--ease-out-expo),
+    box-shadow var(--duration-base) var(--ease-out-expo);
+}
+
+.bento-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(2, 6, 16, 0.45);
+}
+
+.bento-card__label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-md);
+  color: var(--ink-1);
+  margin: 0 0 var(--space-4);
+}
+
+.bento-card__fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  flex: 1;
+  justify-content: space-between;
+}
+
+/* Two-up fields in the wider left-column cards: side by side on desktop, back
+   to stacked on mobile where the column is already narrow. */
+@media (min-width: 760px) {
+  .bento-card__fields--pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-content: start;
+  }
+}
+
+/* Calculate sits centred under all the modules — the page's midpoint. */
+.st2-calc-row {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-8);
+}
+
+.st2-calc-row button {
+  font-size: var(--text-md);
+  padding: var(--space-4) var(--space-16);
+}
+
+.st2-result {
+  text-align: center;
+}
+
+.st2-result .tier-summary {
+  justify-content: center;
+}
+
+/* Map + town detail live in one "explore" surface (XCH 2026-07-18). Default
+   (mobile) is a single column: full-width map, detail panel stacks below when a
+   town is picked. On desktop it becomes a two-column grid that animates open —
+   the map shrinks and shifts left, the panel slides in on the right. */
+.st2-explore {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+  align-items: start;
+}
+
+/* The map is the payoff — capped so it doesn't get comically tall, centred in
+   its cell while the panel is closed. */
+.st2-map {
+  max-width: 920px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Detail panel: present but zero-width/clipped until a town is selected, so the
+   column can animate from nothing. (position: relative anchors the absolute
+   close button — merged here from a stray duplicate selector block.) */
+.st2-detail-panel {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.st2-detail-panel[aria-hidden="true"] {
+  pointer-events: none;
 }
 
 @media (min-width: 900px) {
-  .st2-layout {
-    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
-    align-items: start;
+  .st2-explore {
+    /* Both tracks are minmax(0, <flex>) in BOTH states so the columns
+       interpolate smoothly. The earlier `0fr` closed value was a different
+       track type from the open `minmax(0, 0.85fr)`, which the browser can't
+       tween — it snapped, which read as the jank. A deliberately unhurried
+       0.9s beat (slower than --duration-slow on purpose, per XCH): the map
+       eases smaller and the panel widens in rather than appearing at once. */
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0fr);
+    justify-items: stretch;
+    transition: grid-template-columns 0.9s var(--ease-out-expo);
   }
-
-  /* Sticky only makes sense once the form and the map/result column sit
-     side by side (>=900px) — below that they stack in one column, and a
-     sticky form would float on top of the map/result content beneath it
-     (real bug found in the S2 mobile check: the map rendered directly over
-     the form fields and Calculate button once scrolled past the form). */
-  .st2-form-card,
-  .st3-form-card {
+  .st2-explore[data-detail-open="true"] {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.85fr);
+  }
+  /* Align the map's midline with the (slightly taller) panel's midline (XCH
+     2026-07-18): center the shorter map in the row the taller panel defines,
+     rather than both top-aligned. */
+  .st2-explore[data-detail-open="true"] .st2-map {
+    align-self: center;
+  }
+  /* Open on desktop: the panel's own surface. Background/border come from its
+     .glass-surface classes now (frosted over the Buildings backdrop); only the
+     sticky position, radius, and padding are set here. */
+  .st2-explore[data-detail-open="true"] .st2-detail-panel {
     position: sticky;
     top: calc(var(--nav-height) + var(--space-6));
+    border-radius: var(--radius-md);
+    padding: var(--space-6);
   }
+}
+
+/* Mobile: the panel is just a stacked card, shown once a town is chosen. */
+@media (max-width: 899px) {
+  .st2-detail-panel[aria-hidden="true"] {
+    display: none;
+  }
+  .st2-detail-panel[aria-hidden="false"] {
+    border-radius: var(--radius-md);
+    padding: var(--space-6);
+  }
+}
+
+.st2-detail-close {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  z-index: 1;
+  width: 2rem;
+  height: 2rem;
+  /* Zero out the base `button` padding (space-3 space-6) — in a 2rem button it
+     shoved the × into the corner instead of the centre. */
+  padding: 0;
+  display: grid;
+  place-items: center;
+  font-size: var(--text-lg);
+  line-height: 1;
+  color: var(--ink-2);
+  background: var(--bg-2);
+  border: var(--border-hairline);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-out-expo),
+    background var(--duration-fast) var(--ease-out-expo),
+    transform var(--duration-fast) var(--ease-out-expo);
+}
+.st2-detail-close:hover {
+  color: var(--ink-1);
+  /* Hold the surface — base `button:hover` would otherwise turn it coral. */
+  background: var(--bg-2);
+  transform: scale(1.08);
+}
+
+/* Content reveal: the media and body ease in as the panel widens (a beat after
+   the column starts opening) rather than popping. On close they fade back as the
+   column collapses. The global reduced-motion rule (base.css) makes both
+   instant. */
+.st2-detail-media,
+.st2-detail-body {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity var(--duration-slow) var(--ease-out-expo) 0.2s,
+    transform var(--duration-slow) var(--ease-out-expo) 0.2s;
+}
+.st2-explore[data-detail-open="true"] .st2-detail-media,
+.st2-explore[data-detail-open="true"] .st2-detail-body {
+  opacity: 1;
+  transform: none;
+}
+
+/* Media: a real town photo when one is vendored under static/img/towns/,
+   otherwise a graceful placeholder (region-tinted panel + the town's initials)
+   so the panel never shows a broken image while photos are still being added. */
+.st2-detail-media {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  margin: 0 0 var(--space-6);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: linear-gradient(150deg, var(--bg-2), rgba(255, 107, 107, 0.14));
+  display: grid;
+  place-items: center;
+}
+.st2-detail-media-mark {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-3xl);
+  letter-spacing: -0.03em;
+  color: var(--ink-2);
+  opacity: 0.55;
+}
+.st2-detail-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.st2-detail-body h3 {
+  margin: 0 0 var(--space-3);
+}
+.st2-detail-region {
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0 0 var(--space-1);
+}
+.st2-detail-tier {
+  font-weight: 700;
+  margin: 0 0 var(--space-3);
+}
+.st2-detail-tier.tier-plenty { color: var(--tier-plenty); }
+.st2-detail-tier.tier-cosy { color: var(--tier-cosy); }
+.st2-detail-tier.tier-foothold { color: var(--tier-foothold); }
+.st2-detail-hint,
+.st2-detail-meta {
+  color: var(--ink-2);
+  margin: 0 0 var(--space-4);
+}
+
+.st2-detail-prices {
+  margin: 0 0 var(--space-6);
+}
+.st2-detail-price {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-2) 0;
+}
+.st2-detail-price + .st2-detail-price {
+  border-top: var(--border-hairline);
+}
+.st2-detail-price span {
+  color: var(--ink-2);
+}
+.st2-detail-price strong {
+  color: var(--ink-1);
+  font-variant-numeric: tabular-nums;
+}
+
+.st2-detail-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-6);
 }
 
 .result-figure {
@@ -207,7 +677,7 @@
 
 .map-marker.tier-foothold circle {
   fill: var(--tier-foothold);
-  filter: drop-shadow(0 0 3px rgba(217, 154, 63, 0.7));
+  filter: drop-shadow(0 0 4px rgba(255, 107, 107, 0.8));
 }
 
 .map-marker.tier-cosy circle {
@@ -217,7 +687,7 @@
 
 .map-marker.tier-plenty circle {
   fill: var(--tier-plenty);
-  filter: drop-shadow(0 0 8px rgba(255, 233, 168, 0.9));
+  filter: drop-shadow(0 0 8px rgba(53, 208, 122, 0.9));
   r: 7.5;
 }
 
@@ -280,16 +750,96 @@
 
 /* ================= ST3 Valuation Stop ================= */
 
+/* Head (title/intro) on top, then the body (XCH 2026-07-18). */
 .st3-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.st3-head {
+  max-width: var(--prose-max);
+}
+
+/* The body starts as one centred column (form only) and, once valued, becomes
+   a two-column form/result split. On desktop the grid-template-columns change
+   is animated (same trick as ST2's explore panel) so the form eases left and
+   the result widens in on the right rather than snapping. */
+.st3-body {
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--space-8);
 }
 
+/* Form: capped and centred in whatever column it occupies. When the result
+   column is 0fr (not valued) the form sits in page centre; when the left column
+   narrows to 0.9fr the same centred card rides left with it. */
+.st3-form-card {
+  max-width: 560px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Town on its own row (long option text), the other four inputs 2-up so their
+   heights line up instead of a five-tall ragged stack. */
+.st3-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.st3-field-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+@media (min-width: 520px) {
+  .st3-field-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.st3-value-btn {
+  margin-top: var(--space-2);
+}
+
+/* Result column: clipped to nothing until valued so it can widen in from zero;
+   its content fades up a beat after the column starts opening. */
+.st3-result-col {
+  min-width: 0;
+  overflow: hidden;
+}
+.st3-result-col > * {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity var(--duration-slow) var(--ease-out-expo) 0.2s,
+    transform var(--duration-slow) var(--ease-out-expo) 0.2s;
+}
+.st3-layout[data-valued="true"] .st3-result-col > * {
+  opacity: 1;
+  transform: none;
+}
+
+/* Mobile: no column animation — just hide the empty result until valued, then
+   stack it under the form. */
+@media (max-width: 899px) {
+  .st3-layout[data-valued="false"] .st3-result-col {
+    display: none;
+  }
+}
+
 @media (min-width: 900px) {
-  .st3-layout {
-    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  .st3-body {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0fr);
     align-items: start;
+    transition: grid-template-columns 0.9s var(--ease-out-expo);
+  }
+  .st3-layout[data-valued="true"] .st3-body {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  }
+  /* Once valued, the form fills its narrowed left column and sticks while the
+     taller result column scrolls past. */
+  .st3-layout[data-valued="true"] .st3-form-card {
+    position: sticky;
+    top: calc(var(--nav-height) + var(--space-6));
   }
 }
 
@@ -426,8 +976,29 @@
 
 /* ================= ST4 Time Stop ================= */
 
+/* Single centred column (XCH 2026-07-18): title/intro on top, then one module.
+   The old two-column split with the house/sky scene + Skip button, the scroll
+   scrub, and the manual slider are gone — the lease curve is read by hovering. */
+.st4-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.st4-head {
+  max-width: var(--prose-max);
+}
+
+.st4-panel {
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
 .st4-controls {
-  margin-bottom: var(--space-6);
   align-items: flex-end;
 }
 
@@ -436,13 +1007,11 @@
   min-width: 180px;
 }
 
-.st4-slider-label {
-  min-width: 260px;
-}
-
-.st4-slider-label strong {
-  color: var(--coral);
-  font-variant-numeric: tabular-nums;
+/* The live hover readout below the chart (js/stations/st4.js) — its own line so
+   the card height doesn't jump as the text changes. */
+#st4-note {
+  min-height: 1.4em;
+  margin-top: var(--space-4);
 }
 
 /* ================= ST5 / ST6 shared chart-station layout ================= */
@@ -475,6 +1044,19 @@
 }
 
 /* ================= ST7 Home ================= */
+
+/* The one simplified otter easter egg (§7.9.1, scoped down 2026-07-17). */
+.st7-otter {
+  color: var(--ink-2);
+  width: 48px;
+  margin: var(--space-4) 0;
+}
+
+.st7-otter svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
 
 .st7-report-card {
   margin: var(--space-6) 0 var(--space-8);
@@ -556,37 +1138,157 @@
   font-size: var(--text-sm);
 }
 
-.one-more-thing {
-  margin: var(--space-12) 0;
-}
-
-.one-more-thing summary {
-  cursor: pointer;
-  color: var(--ink-2);
-  font-size: var(--text-sm);
-}
-
-.one-more-thing summary:hover {
-  color: var(--coral);
-}
-
-.one-more-thing figure {
-  margin: var(--space-4) 0 0;
-}
-
-.one-more-thing img {
-  border-radius: var(--radius-md);
-  max-width: min(100%, 640px);
-}
-
-.one-more-thing figcaption {
-  font-size: var(--text-xs);
-  color: var(--ink-2);
-  margin-top: var(--space-2);
-}
-
 .st7-footer {
   border-top: var(--border-hairline);
   padding-top: var(--space-6);
   margin-top: var(--space-8);
+}
+
+/* ================= Buildings backdrop for ST2-ST6 =================
+   Buildings2.png as a fixed layer behind the mid-journey stations, using the
+   same treatment as ST1's backdrop (虚化 + 黑透): the image is pre-blurred and a
+   scrim darkens it with the SAME params ST0 hands ST1 (blur 14px, scrim 0.62),
+   so the transition reads as one continuous darkened skyline. Fixed like
+   #world-bg so it STAYS put as ST2–ST6 scroll; js/stations/st0.js fades the
+   whole layer in as ST2 arrives (over the fading #world-bg) and back out before
+   ST7, which paints its own opaque background over it. Default opacity 0: under
+   no-JS / reduced-motion, ST2-ST6 simply show the starfield behind their cards. */
+/* #ending-bg (the Ending skyline behind ST7) shares every backdrop rule with
+   #city-bg — same fixed layer, same 虚化 + 黑透 params — it's just a different
+   image cross-faded in for the final station. */
+#city-bg,
+#ending-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  opacity: 0;
+  pointer-events: none;
+}
+#city-bg-img,
+#ending-bg-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(14px);
+}
+#city-bg-scrim,
+#ending-bg-scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-0);
+  opacity: 0.62;
+}
+
+/* ST2-ST7 opt out of the opaque section background so the fixed backdrops
+   (#city-bg for ST2-ST6, #ending-bg for ST7) show through (mirrors .st0/.st1). */
+#st2-budget,
+#st3-valuation,
+#st4-lease,
+#st5-market,
+#st6-arena,
+#st7-home {
+  background: transparent;
+}
+
+/* ================= Glass surface (single, unified, SITE-WIDE) =================
+   ONE frosted-glass material for EVERY card on the site (XCH 2026-07-18): the
+   site's --glass-* tokens — a backdrop-filter blur + soft shadow, no bright
+   top edge, no refraction. The React Bits SVG feDisplacementMap "refraction"
+   variant was removed (its per-element Chrome-only filter recomputed every
+   scroll frame and was the source of the jank). `.card` is included here so
+   plain cards (ST5/ST6/ST7) get the identical frost as the ST1–ST4 modules
+   without any per-template class — setting `border` also clears the old
+   .glass border-image highlight on the ST7 report card. Placed after base.css
+   so it wins over the opaque `.card` / `.bento-card` backgrounds. */
+.glass-surface,
+.card {
+  position: relative;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border-bottom);
+  border-radius: var(--radius-md);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+/* ================= Cursor glow + global spotlight (js/magic-bento.js) =========
+   The MagicBento signature, extended from ST2's bento cards to EVERY card
+   (XCH 2026-07-18): a coral border-glow that rides the cursor, painted only on
+   the border via a mask, its intensity driven by proximity to the cursor
+   (--glow-* set from JS). Paired with one soft coral spotlight that follows the
+   cursor across the page (screen blend). Tilt / magnetism / particles are
+   intentionally excluded — cards that drift or tilt fight typing into the forms
+   they hold. Border glow is paint-only (a masked ::after), so it stays cheap. */
+.card,
+.bento-card,
+.glass-surface {
+  position: relative;
+  --glow-x: 50%;
+  --glow-y: 50%;
+  --glow-intensity: 0;
+  --glow-radius: 300px;
+}
+
+.card::after,
+.bento-card::after,
+.glass-surface::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 1.5px;
+  border-radius: inherit;
+  background: radial-gradient(var(--glow-radius) circle at var(--glow-x) var(--glow-y),
+    rgba(255, 107, 107, calc(var(--glow-intensity) * 0.9)) 0%,
+    rgba(255, 107, 107, calc(var(--glow-intensity) * 0.35)) 35%,
+    transparent 65%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 1;
+  transition: opacity var(--duration-base) var(--ease-out-expo);
+}
+
+/* One soft coral light following the cursor. `screen` over the dark surfaces
+   reads as an additive glow; sits below the nav so it never washes the bar. */
+.magic-spotlight {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 640px;
+  height: 640px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: var(--z-spotlight);
+  opacity: 0;
+  mix-blend-mode: screen;
+  will-change: transform, opacity;
+  transition: transform 0.12s var(--ease-out-expo), opacity 0.3s var(--ease-out-expo);
+  background: radial-gradient(circle,
+    rgba(255, 107, 107, 0.14) 0%,
+    rgba(255, 107, 107, 0.07) 20%,
+    rgba(255, 107, 107, 0.03) 38%,
+    transparent 62%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .magic-spotlight { display: none; }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-surface,
+  .card {
+    background: var(--glass-bg-strong);
+  }
+}
+
+/* Users who ask for less transparency get an opaque card instead of frost. */
+@media (prefers-reduced-transparency: reduce) {
+  .glass-surface,
+  .card {
+    background: var(--glass-bg-strong);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }

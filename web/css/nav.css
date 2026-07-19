@@ -42,6 +42,10 @@
   flex: 1;
   height: 100%;
   display: none;
+  /* Nudge the whole rail group (line + train + dots) down a touch — the train
+     rides above the line, so at a true 50% the group's visual mass sits high;
+     this re-centres it against the brand text and action buttons. */
+  transform: translateY(17px);
 }
 
 /* Clips ONLY the train's horizontal overflow — deliberately a separate box

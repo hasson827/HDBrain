@@ -53,8 +53,9 @@ existing debt, HDB loan, evaluating an ANG MO KIO 4-room flat.
 
 **ST4 Time Stop**
 
-1. Pick a town/flat type, drag the remaining-lease slider. The chart and the "At N years
-   remaining" note below it must update live.
+1. Pick a town/flat type, then hover along the lease-decay curve (the slider was removed
+   2026-07-18 — hovering is the interaction now). The "At N years remaining" note below
+   the chart must update live as the pointer moves.
 
 **ST5 Lookout**
 
@@ -63,7 +64,7 @@ existing debt, HDB loan, evaluating an ANG MO KIO 4-room flat.
 
 **ST6 Arena**
 
-1. Switch the metric selector (RMSE/MAE/R2/MAPE); the bar chart must redraw.
+1. Switch the metric tabs (RMSE / MAE / R² / Median APE); the bar chart must redraw.
 2. Quantile coverage, ablation, and global SHAP tables must all be populated (not empty).
 
 **ST7 Home**

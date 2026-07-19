@@ -1,18 +1,30 @@
 /**
- * ST7 Home / report station (README_XCH §7.3 ST7 / §8 S2 task 4). S2 scope:
- * styled report generator + Responsible AI disclosure cards + footer credit.
- * The "train arrives home, door opens, planet lights up" scroll sequence
- * (§7.11.2) is S3's job — this station is static here.
- *
- * The bonus fireworks image (clips/Ending.png -> static/img/fireworks.png) is
- * an easter egg addition, not a replacement for the §7.11.2 planet ending —
- * XCH's explicit call after reviewing it mid-S2 (2026-07-17): keep it tucked
- * behind a quiet "One more thing" disclosure so it doesn't compete with the
- * planned close.
+ * ST7 Home / report station (README_XCH §7.3 ST7 / §8 S2 task 4): styled report
+ * generator + Responsible AI disclosure cards + footer credit. The pinned
+ * "Welcome home" finale (planet/ground scrub) and the "One more thing" fireworks
+ * easter egg were removed per XCH (2026-07-18) — the finale glitched entering
+ * ST7 and its pin is gone with it.
  */
 import { journeyState } from "../state.js";
 import { TemplateProvider } from "../report/providers.js";
 import { renderMarkdown } from "../markdown.js";
+import { revealOnce } from "../motion.js";
+
+// One simplified "otter" easter egg (README §7.9.1 "水獭一家"), appearing
+// once here rather than in every station's corner (XCH's 2026-07-17 call:
+// the full multi-pose per-station version is real scope, not worth it for
+// a single course-project flourish). Same flat line-art stroke language as
+// flat-icons.js — a body, a rounded head, a raised paw.
+const OTTER_SVG = `
+  <svg class="otter-icon" viewBox="0 0 64 64" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M14 46 C14 34 20 26 30 26 C40 26 46 34 46 44 C46 50 41 54 34 54 L22 54 C17 54 14 51 14 46 Z"/>
+    <circle cx="30" cy="20" r="8"/>
+    <circle cx="26" cy="19" r="1.4" fill="currentColor"/>
+    <circle cx="34" cy="19" r="1.4" fill="currentColor"/>
+    <path d="M30 22 L28 24 M30 22 L32 24" />
+    <path d="M40 30 C46 26 50 28 50 22" />
+  </svg>
+`;
 
 const DISCLOSURES = [
   {
@@ -21,7 +33,7 @@ const DISCLOSURES = [
   },
   {
     title: "Training data ends in 2023",
-    body: "The CPI series used to inflation-adjust prices freezes after 2020-09, so estimates run 9–16% below real 2025 transactions during this upside market.",
+    body: "The CPI (Consumer Price Index) series used to inflation-adjust prices freezes after 2020-09, so estimates run 9–16% below real 2025 transactions during this upside market.",
   },
   {
     title: "Prediction intervals are optimistic",
@@ -56,7 +68,7 @@ export function initSt7() {
       <h2>ST7 &middot; Home</h2>
       <p class="lede">Everything you checked this session, assembled into one report.</p>
 
-      <div class="card glass st7-report-card">
+      <div class="card st7-report-card">
         <div class="cluster">
           <button type="button" id="st7-generate">Generate my report</button>
           <button type="button" class="btn-ghost btn-sm" id="st7-download" hidden>Download as Markdown</button>
@@ -73,17 +85,10 @@ export function initSt7() {
           </div>`).join("")}
       </div>
 
-      <details class="one-more-thing">
-        <summary>One more thing</summary>
-        <figure>
-          <img src="./static/img/fireworks.png" alt="A couple watching National Day fireworks over Marina Bay, illustrating the journey's end." />
-          <figcaption>Wei Ling &amp; Marcus, somewhere past the last station.</figcaption>
-        </figure>
-      </details>
-
       <footer class="st7-footer">
         <p class="disclosure">Data: data.gov.sg HDB resale flat prices. Policy references: MAS, MoneySense.
            Built for an NUS course project.</p>
+        <div class="st7-otter" aria-hidden="true">${OTTER_SVG}</div>
         <h3>Team</h3>
         <ul class="team-list">
           ${TEAM.map((m) => `<li>${m.name} <span class="team-school">(${m.school})</span></li>`).join("")}
@@ -114,4 +119,11 @@ export function initSt7() {
     a.click();
     URL.revokeObjectURL(url);
   });
+
+  // "情绪高点之后是克制的落幕" (§7.11.2) — everything after the finale settles
+  // in quietly as it scrolls into view, not all at once on page load.
+  revealOnce(document.querySelector(".st7-report-card"));
+  revealOnce(document.querySelector(".grid-cards-5"));
+  revealOnce(document.querySelector(".st7-otter"));
+  revealOnce(document.querySelector(".st7-footer"));
 }
