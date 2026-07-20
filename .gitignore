@@ -227,6 +227,3 @@ __marimo__/
 *.pkl
 *.pickle
 .DS_Store
-
-# Frontend LLM API key (per-machine; copy from llm-config.example.js)
-web/js/report/llm-config.js

@@ -4,9 +4,9 @@
  *  - TemplateProvider: deterministic, zero dependencies, the permanent fallback and the
  *    only provider on static deployments (GitHub Pages) where no API key is present.
  *  - LLMProvider: cloud LLM via OpenRouter (replaces the originally planned OllamaProvider —
- *    same provider architecture, different transport). Enabled only when the gitignored
- *    llm-config.js exists (see loadLLMConfig below); async, throws on any failure so the
- *    caller can fall back to TemplateProvider.
+ *    same provider architecture, different transport). Enabled only when llm-config.js
+ *    resolves to a usable key (see loadLLMConfig below); async, throws on any failure so
+ *    the caller can fall back to TemplateProvider.
  */
 
 function fmtMoney(n) {
@@ -115,10 +115,11 @@ export class TemplateProvider {
   }
 }
 
-/** Runtime detection (§7.9.5 "运行时探测"): the key file is gitignored, so on a clean
- * checkout / static deployment the dynamic import 404s and we return null → template path.
- * The browser logs that 404 in the console; that is expected, not a bug. Cached so the
- * ST3 explainer and ST7 report share one probe instead of re-importing per click. */
+/** Runtime detection (§7.9.5 "运行时探测"): llm-config.js now ships with the repo
+ * (base64-encoded key, XCH's 2026-07-20 call), so this normally resolves to a config;
+ * the null path remains for a deployment that strips the file or blanks the key —
+ * everything downstream still degrades to the template cleanly. Cached so the ST3
+ * explainer and ST7 report share one probe instead of re-importing per click. */
 let llmConfigProbe = null;
 export function loadLLMConfig() {
   llmConfigProbe ??= import("./llm-config.js")

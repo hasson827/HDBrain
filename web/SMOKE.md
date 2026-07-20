@@ -50,11 +50,12 @@ existing debt, HDB loan, evaluating an ANG MO KIO 4-room flat.
    6 SHAP features, and (if available) up to 20 recent comparable transactions.
 3. The disclosure line above the form ("Estimates are based on training data up to
    2023...") must be visible.
-4. LLM explainer (only when `js/report/llm-config.js` exists — on a clean checkout the
-   button must simply not appear): an "Explain in plain English" button shows under the
-   SHAP note. Click it; within ~10-30s a tinted paragraph appears whose figures all match
-   the SHAP bars / estimate exactly (the money-whitelist guard rejects anything else).
-   With no network, it must show the "explainer is unreachable" fallback line instead.
+4. LLM explainer (`js/report/llm-config.js` ships with the repo, base64-encoded key):
+   an "Explain in plain English" button shows under the SHAP note. Click it; within
+   ~10-30s a tinted paragraph appears whose figures all match the SHAP bars / estimate
+   exactly (the money-whitelist guard rejects anything else). With no network, it must
+   show the "explainer is unreachable" fallback line instead. With the config file
+   removed or its key blanked, the button must simply not appear.
 
 **ST4 Time Stop**
 
@@ -77,9 +78,9 @@ existing debt, HDB loan, evaluating an ANG MO KIO 4-room flat.
 1. Click "Generate my report". The report must include: the budget from step ST2, the
    town tiers, any valuations viewed in ST3, the lease experiment from ST4, an arena
    snapshot, and the fixed "How to read this report" disclosures.
-2. Provider states (§7.9.5): with `js/report/llm-config.js` present the button shows a
+2. Provider states (§7.9.5): normally (config ships with the repo) the button shows a
    "Drafting your report…" loading state and the meta line below the report reads
-   "Drafted by openai/gpt-oss-20b:free via OpenRouter…"; with the config absent or the
+   "Drafted by openai/gpt-oss-20b:free via OpenRouter…"; with the config stripped or the
    network down it falls back seamlessly and the meta line says so. Never an error state.
 3. Layout: the heading, report card, and footer are centred on the page axis; the report
    prose is a centred reading column (left-aligned text). Nothing hugs the left edge.

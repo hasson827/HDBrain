@@ -187,8 +187,8 @@ function renderResult(result, shapTop6, query) {
 
 /** Same LLM contract as the ST7 report, scoped to one valuation: the SHAP rows and
  * interval double as the fact sheet, the LLM only phrases them. The whole block
- * stays hidden unless the (gitignored) LLM config exists — on a static deployment
- * ST3 simply never shows the button, no dead control. */
+ * stays hidden unless the LLM config resolves (loadLLMConfig) — with the config
+ * stripped or blanked, ST3 simply never shows the button, no dead control. */
 function wireExplain(panel, result, shapTop6, query) {
   const container = panel.querySelector(".st3-explain");
   const btn = panel.querySelector("#st3-explain-btn");

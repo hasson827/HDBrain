@@ -112,7 +112,7 @@ export function initSt7() {
     let meta = "Rules-based summary (deterministic template).";
     lastMarkdown = "";
 
-    // Provider selection per §7.9.5: LLM when the (gitignored) key file exists,
+    // Provider selection per §7.9.5: LLM when llm-config.js resolves to a key,
     // seamless fallback to the template otherwise or on any LLM failure.
     generateBtn.disabled = true;
     const cfg = await loadLLMConfig();
