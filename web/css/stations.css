@@ -962,20 +962,24 @@
   color: var(--coral);
 }
 
-/* LLM plain-English explanation under the SHAP bars (2026-07-20). The output
-   sits in a quiet tinted inset — generated prose, visually distinct from the
-   card's own rules-based copy. */
-.st3-explain {
+/* LLM plain-English explanation blocks (ST3 SHAP bars + ST2 budget result,
+   2026-07-20). The output sits in a quiet tinted inset — generated prose,
+   visually distinct from the surrounding rules-based copy. */
+.llm-explain {
   margin-top: var(--space-4);
 }
 
-.st3-explain-text {
+.llm-explain-text {
   font-size: var(--text-sm);
   color: var(--ink-1);
   background: var(--bg-2);
   border-radius: var(--radius-sm);
   padding: var(--space-3) var(--space-4);
   margin: 0;
+  /* Prose stays left-aligned even inside ST2's centred result column — the
+     centred thing is the block (margin-inline), not the sentences. */
+  text-align: left;
+  margin-inline: auto;
 }
 
 .comp-header {

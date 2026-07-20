@@ -247,12 +247,36 @@ const EXPLAIN_SYSTEM = [
   "- Do not give buying advice or opinions on whether this is a good deal.",
 ].join("\n");
 
-/** ST3 "explain this estimate" (the report's little sibling): same fact-sheet-in,
- * guarded-prose-out contract, scoped to a single valuation. Throws on any failure —
- * the caller shows a quiet inline fallback. */
-export async function explainValuation(config, facts) {
-  const text = await chatComplete(config, EXPLAIN_SYSTEM, `Valuation fact sheet:\n\n${facts}`);
+const BUDGET_EXPLAIN_SYSTEM = [
+  "You are the plain-language explainer for the Budget Stop of HDBrain, a Singapore HDB resale flat advisor built as an NUS course project.",
+  "You will receive a fact sheet decomposing how one user's maximum affordable HDB resale price was computed:",
+  "the MSR/TDSR monthly repayment caps, the loan and price ceiling they imply, the upfront cash + CPF budget",
+  "(downpayment + Buyer's Stamp Duty), and which constraint ends up binding.",
+  "Write 3-5 plain sentences explaining to this user why their maximum affordable price comes out at this number.",
+  "",
+  "Hard rules:",
+  "- Use ONLY facts and numbers from the fact sheet. Copy every figure exactly as written; never invent or re-derive numbers.",
+  "- Name the rule that caps the monthly repayment (MSR or TDSR) and say clearly which final constraint binds:",
+  "  the monthly repayment cap or the upfront cash budget.",
+  "- Plain sentences only: no headings, no bullet lists, no markdown formatting, no preamble.",
+  "- Do not give financial advice, product recommendations, or opinions on what the user should do.",
+].join("\n");
+
+/** Shared guarded-explanation contract (fact-sheet-in, plain-prose-out): throws on
+ * any failure — callers show a quiet inline fallback. */
+async function guardedExplain(config, systemPrompt, facts) {
+  const text = await chatComplete(config, systemPrompt, `Fact sheet:\n\n${facts}`);
   if (!text || text.includes("#")) throw new Error("LLM explanation is empty or misformatted");
   assertFigures(facts, text);
   return text;
+}
+
+/** ST3 "explain this estimate": one valuation's SHAP factors, phrased. */
+export function explainValuation(config, facts) {
+  return guardedExplain(config, EXPLAIN_SYSTEM, facts);
+}
+
+/** ST2 "explain my budget": the affordability engine's decomposition, phrased. */
+export function explainBudget(config, facts) {
+  return guardedExplain(config, BUDGET_EXPLAIN_SYSTEM, facts);
 }

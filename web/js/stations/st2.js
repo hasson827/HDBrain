@@ -4,8 +4,12 @@
  * click-through detail panel into ST3. Map ripple/window-lighting animation and
  * the pinned scrollytelling steps are S3 (§8 S3 task 5-6).
  */
-import { forHdbLoan, forBankLoan, maxAffordablePrice } from "../engine/affordability.js";
+import {
+  forHdbLoan, forBankLoan, maxAffordablePrice,
+  maxMonthlyPayment, maxLoanFromPayment, maxPriceFromUpfrontBudget, stampDuty,
+} from "../engine/affordability.js";
 import { computeTownAffordability, queryTownMeta } from "../engine/valuation.js";
+import { loadLLMConfig, explainBudget } from "../report/providers.js";
 import { recordBudget, requestTownFocus } from "../state.js";
 import { renderMap, updateMapTiers, onMapTownSelect } from "../map.js";
 import { scrollToTarget } from "../scroll.js";
@@ -149,12 +153,12 @@ export async function initSt2() {
     latestTiers = tiers;
     recordBudget(profile, maxPrice, tiers);
 
-    renderResult(maxPrice, tiers);
+    renderResult(maxPrice, tiers, profile);
     updateMapTiers(tiers);
   });
 }
 
-function renderResult(maxPrice, tiers) {
+function renderResult(maxPrice, tiers, profile) {
   const result = document.getElementById("st2-result");
   const counts = tiers.reduce((acc, t) => {
     acc[t.tier] = (acc[t.tier] ?? 0) + 1;
@@ -171,8 +175,73 @@ function renderResult(maxPrice, tiers) {
       <span><strong>${counts.none ?? 0}</strong> out of reach</span>
       <span><strong>${tiers.length}</strong> towns checked</span>
     </div>
+    <div class="llm-explain" hidden>
+      <button type="button" class="btn-ghost btn-sm" id="st2-explain-btn">Explain my budget</button>
+      <p class="llm-explain-text" hidden></p>
+    </div>
   `;
+  wireBudgetExplain(result, maxPrice, tiers, profile);
   popIn(result);
+}
+
+/** Same guarded-LLM contract as ST3/ST7 (§7.9.5), applied to the budget: the
+ * affordability engine's own decomposition (MSR/TDSR caps, loan-implied price
+ * ceiling, upfront-budget ceiling, binding constraint) doubles as the fact
+ * sheet, so the LLM only phrases arithmetic the engine already did. Hidden
+ * entirely when the LLM config doesn't resolve. */
+function wireBudgetExplain(result, maxPrice, tiers, profile) {
+  const container = result.querySelector(".llm-explain");
+  const btn = result.querySelector("#st2-explain-btn");
+  const out = result.querySelector(".llm-explain-text");
+
+  loadLLMConfig().then((cfg) => {
+    if (!cfg) return;
+    container.hidden = false;
+
+    const money = (n) => `S$${Math.round(n).toLocaleString("en-SG")}`;
+    const pct = (x) => `${(x * 100).toFixed(0)}%`;
+    const msrCap = profile.monthlyIncome * profile.msrLimit;
+    const tdsrCap = profile.monthlyIncome * profile.tdsrLimit - profile.existingDebtMonthly;
+    const maxMonthly = maxMonthlyPayment(profile);
+    const maxLoan = maxLoanFromPayment(maxMonthly, profile.interestRate, profile.tenureYears);
+    const priceCapLoan = maxLoan / (1 - profile.downpaymentPct);
+    const upfrontBudget = profile.cashSavings + profile.cpfAvailable;
+    const priceCapUpfront = maxPriceFromUpfrontBudget(upfrontBudget, profile.downpaymentPct);
+    const bindingConstraint = priceCapUpfront < priceCapLoan ? "the upfront cash + CPF budget" : "the monthly repayment cap";
+    const reachable = tiers.filter((t) => t.tier !== "none").length;
+
+    const facts = [
+      `Profile: monthly household income ${money(profile.monthlyIncome)}; existing monthly debts ${money(profile.existingDebtMonthly)}; ` +
+      `${profile.loanType === "hdb" ? "HDB concessionary" : "bank"} loan at ${(profile.interestRate * 100).toFixed(1)}% interest over ` +
+      `${profile.tenureYears} years; downpayment ${pct(profile.downpaymentPct)}; cash savings ${money(profile.cashSavings)} plus CPF (OA) ${money(profile.cpfAvailable)}.`,
+      `Monthly repayment caps: MSR (${pct(profile.msrLimit)} of income) allows ${money(msrCap)} per month; ` +
+      `TDSR (${pct(profile.tdsrLimit)} of income minus existing debts) allows ${money(tdsrCap)} per month; ` +
+      `the stricter rule is ${msrCap <= tdsrCap ? "MSR" : "TDSR"}, so the cap is ${money(maxMonthly)} per month.`,
+      `Loan maths: ${money(maxMonthly)} per month over ${profile.tenureYears} years at ${(profile.interestRate * 100).toFixed(1)}% supports a loan of ${money(maxLoan)}; ` +
+      `with a ${pct(profile.downpaymentPct)} downpayment that implies a price ceiling of ${money(priceCapLoan)}.`,
+      `Upfront budget: cash + CPF = ${money(upfrontBudget)} must cover the ${pct(profile.downpaymentPct)} downpayment plus Buyer's Stamp Duty (BSD); ` +
+      `that caps the price at ${money(priceCapUpfront)} (BSD at that price is ${money(stampDuty(priceCapUpfront))}).`,
+      `Final maximum affordable price: ${money(maxPrice)}; the binding constraint is ${bindingConstraint}.`,
+      `Towns: ${reachable} of ${tiers.length} towns have at least one flat-size band within this budget.`,
+    ].join("\n");
+
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      btn.textContent = "Reading the rules…";
+      try {
+        const text = await explainBudget(cfg, facts);
+        out.textContent = text;
+        out.hidden = false;
+        btn.hidden = true;
+      } catch (err) {
+        console.warn("Budget explainer failed:", err);
+        out.textContent = `The explainer is unreachable right now. The short version: ${bindingConstraint} is what limits your budget here.`;
+        out.hidden = false;
+        btn.disabled = false;
+        btn.textContent = "Try explaining again";
+      }
+    });
+  });
 }
 
 // Town -> Wikipedia article title for the names where the bare town would hit

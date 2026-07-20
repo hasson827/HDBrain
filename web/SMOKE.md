@@ -39,6 +39,12 @@ existing debt, HDB loan, evaluating an ANG MO KIO 4-room flat.
    S$228,889 is below the cheapest grid price for every flat type on the island).
 4. Try cash savings `250000` instead: several towns should now show a tier better than
    "Out of reach for now" for smaller flat types.
+5. LLM budget explainer (same provider rules as ST3's): an "Explain my budget" button
+   shows under the tier summary. Click it; the explanation must walk the actual chain
+   (MSR S$2,400/month cap → loan S$529,019 → loan-implied ceiling S$705,359 → upfront
+   cash cap S$228,889) with every figure matching the engine, and name the upfront
+   cash + CPF budget as the binding constraint for this scenario. Offline it shows a
+   deterministic one-line fallback naming the binding constraint instead.
 
 **ST3 Valuation Stop**
 

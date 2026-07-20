@@ -176,9 +176,9 @@ function renderResult(result, shapTop6, query) {
        flats to sell. The bars above (SHAP values &mdash; a standard way of attributing a
        prediction to its inputs) show how much each attribute pushed this estimate up (green)
        or down (red) versus the market-wide average.</p>
-    <div class="st3-explain" hidden>
+    <div class="llm-explain" hidden>
       <button type="button" class="btn-ghost btn-sm" id="st3-explain-btn">Explain in plain English</button>
-      <p class="st3-explain-text" hidden></p>
+      <p class="llm-explain-text" hidden></p>
     </div>
   `;
   wireExplain(panel, result, shapTop6, query);
@@ -190,9 +190,9 @@ function renderResult(result, shapTop6, query) {
  * stays hidden unless the LLM config resolves (loadLLMConfig) — with the config
  * stripped or blanked, ST3 simply never shows the button, no dead control. */
 function wireExplain(panel, result, shapTop6, query) {
-  const container = panel.querySelector(".st3-explain");
+  const container = panel.querySelector(".llm-explain");
   const btn = panel.querySelector("#st3-explain-btn");
-  const out = panel.querySelector(".st3-explain-text");
+  const out = panel.querySelector(".llm-explain-text");
 
   loadLLMConfig().then((cfg) => {
     if (!cfg) return;
