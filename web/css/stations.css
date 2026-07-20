@@ -7,6 +7,26 @@
   color: var(--coral);
 }
 
+/* Station headers centred page-wide (XCH 2026-07-20, extending ST7's finale
+   layout to every station): the title and its one-line intro sit on the page
+   axis; station bodies keep their own layouts. ST2/ST3/ST4 do the same via
+   their .stX-head blocks; ST7 has its own rules; ST0 is the hero composition
+   and stays as designed. */
+#st1-questions .station-inner > h2,
+#st1-questions .station-inner > .lede,
+#st5-market .station-inner > h2,
+#st5-market .station-inner > .lede,
+#st6-arena .station-inner > h2,
+#st6-arena .station-inner > .lede {
+  text-align: center;
+}
+
+#st1-questions .station-inner > .lede,
+#st5-market .station-inner > .lede,
+#st6-arena .station-inner > .lede {
+  margin-inline: auto;
+}
+
 /* ================= ST0 Departure ================= */
 
 .st0 {
@@ -314,7 +334,10 @@
 }
 
 .st2-head {
+  /* Centred like ST7's finale header (XCH 2026-07-20, applied station-wide). */
   max-width: var(--prose-max);
+  margin-inline: auto;
+  text-align: center;
 }
 
 /* Input modules — bento cards. An asymmetric bento (XCH
@@ -758,7 +781,10 @@
 }
 
 .st3-head {
+  /* Centred like ST7's finale header (XCH 2026-07-20, applied station-wide). */
   max-width: var(--prose-max);
+  margin-inline: auto;
+  text-align: center;
 }
 
 /* The body starts as one centred column (form only) and, once valued, becomes
@@ -1002,7 +1028,10 @@
 }
 
 .st4-head {
+  /* Centred like ST7's finale header (XCH 2026-07-20, applied station-wide). */
   max-width: var(--prose-max);
+  margin-inline: auto;
+  text-align: center;
 }
 
 .st4-panel {
