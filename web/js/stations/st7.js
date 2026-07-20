@@ -9,6 +9,7 @@ import { journeyState } from "../state.js";
 import { TemplateProvider, LLMProvider, loadLLMConfig } from "../report/providers.js";
 import { renderMarkdown } from "../markdown.js";
 import { revealOnce } from "../motion.js";
+import { scrollFloat } from "../scroll-float.js";
 
 // One simplified "otter" easter egg (README §7.9.1 "水獭一家"), appearing
 // once here rather than in every station's corner (XCH's 2026-07-17 call:
@@ -171,6 +172,10 @@ export function initSt7() {
     window.addEventListener("afterprint", () => document.body.classList.remove("print-report"), { once: true });
     window.print();
   });
+
+  // Same title/intro entrance as ST2-ST4 (XCH 2026-07-20).
+  scrollFloat(root.querySelector(".station-inner > h2"));
+  scrollFloat(root.querySelector(".station-inner > .lede"));
 
   // "情绪高点之后是克制的落幕" (§7.11.2) — everything after the finale settles
   // in quietly as it scrolls into view, not all at once on page load.

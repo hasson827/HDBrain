@@ -10,10 +10,16 @@
  * visibility).
  */
 import { getGsap, DURATION, EASE, STAGGER, prefersReducedMotion } from "../motion.js";
+import { scrollFloat } from "../scroll-float.js";
 
 export function initSt1() {
   const section = document.getElementById("st1-questions");
   if (!section) return;
+
+  // Same title/intro entrance as ST2-ST4 (XCH 2026-07-20: every station header
+  // gets the ScrollFloat reveal). Self-gated on GSAP/reduced-motion.
+  scrollFloat(section.querySelector(".station-inner > h2"));
+  scrollFloat(section.querySelector(".station-inner > .lede"));
 
   const gsap = getGsap();
   if (!gsap || !window.ScrollTrigger || prefersReducedMotion()) return;

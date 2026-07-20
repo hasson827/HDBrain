@@ -7,6 +7,7 @@
 import { getArena } from "../engine/valuation.js";
 import { recordArenaSnapshot } from "../state.js";
 import { getGsap, DURATION, prefersReducedMotion } from "../motion.js";
+import { scrollFloat } from "../scroll-float.js";
 import { featureLabel } from "../feature-labels.js";
 
 const METRICS = ["rmse", "mae", "r2", "mape"];
@@ -123,6 +124,10 @@ export function initSt6() {
       </details>
     </div>
   `;
+
+  // Same title/intro entrance as ST2-ST4 (XCH 2026-07-20).
+  scrollFloat(root.querySelector(".station-inner > h2"));
+  scrollFloat(root.querySelector(".station-inner > .lede"));
 
   const chart = window.echarts.init(document.getElementById("st6-chart"), "hdbrain-dark");
   const tabs = [...document.querySelectorAll("#st6-metric-tabs .metric-tab")];

@@ -5,6 +5,7 @@
  * hover dimming, no cross-station click-through — those are S2/S3.
  */
 import { listTowns, queryTownIndex } from "../engine/valuation.js";
+import { scrollFloat } from "../scroll-float.js";
 
 export function initSt5() {
   const root = document.getElementById("st5-market");
@@ -36,6 +37,10 @@ export function initSt5() {
       </details>
     </div>
   `;
+
+  // Same title/intro entrance as ST2-ST4 (XCH 2026-07-20).
+  scrollFloat(root.querySelector(".station-inner > h2"));
+  scrollFloat(root.querySelector(".station-inner > .lede"));
 
   const chart = window.echarts.init(document.getElementById("st5-chart"), "hdbrain-dark");
   const townSelect = document.getElementById("st5-town");
