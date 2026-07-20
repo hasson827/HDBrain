@@ -1,8 +1,12 @@
 /**
  * ReportProvider interface (README_XCH §7.9.5): generate(journeyState) -> markdown string.
- * TemplateProvider is the only implementation in S1 (deterministic, zero dependencies,
- * the permanent fallback for the static GitHub Pages deployment). OllamaProvider (local-LLM
- * enhancement with runtime detection + graceful fallback) is an S4 task — not implemented here.
+ * Two implementations:
+ *  - TemplateProvider: deterministic, zero dependencies, the permanent fallback and the
+ *    only provider on static deployments (GitHub Pages) where no API key is present.
+ *  - LLMProvider: cloud LLM via OpenRouter (replaces the originally planned OllamaProvider —
+ *    same provider architecture, different transport). Enabled only when the gitignored
+ *    llm-config.js exists (see loadLLMConfig below); async, throws on any failure so the
+ *    caller can fall back to TemplateProvider.
  */
 
 function fmtMoney(n) {
@@ -109,4 +113,145 @@ export class TemplateProvider {
       "- Report drafted by: rules-based template (no LLM used).",
     ].join("\n");
   }
+}
+
+/** Runtime detection (§7.9.5 "运行时探测"): the key file is gitignored, so on a clean
+ * checkout / static deployment the dynamic import 404s and we return null → template path.
+ * The browser logs that 404 in the console; that is expected, not a bug. Cached so the
+ * ST3 explainer and ST7 report share one probe instead of re-importing per click. */
+let llmConfigProbe = null;
+export function loadLLMConfig() {
+  llmConfigProbe ??= import("./llm-config.js")
+    .then((mod) => {
+      const cfg = mod.LLM_CONFIG;
+      return cfg?.apiKey && !cfg.apiKey.includes("REPLACE_ME") ? cfg : null;
+    })
+    .catch(() => null);
+  return llmConfigProbe;
+}
+
+/** Shared OpenRouter call: 60s timeout, fence-unwrapping, throws on any failure. */
+async function chatComplete(config, systemPrompt, userContent) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 60_000);
+  let res;
+  try {
+    res = await fetch(config.endpoint, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${config.apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: config.model,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userContent },
+        ],
+        max_tokens: 4000,
+        temperature: 0.4,
+        reasoning: { effort: "low" },
+      }),
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timer);
+  }
+  if (!res.ok) throw new Error(`OpenRouter HTTP ${res.status}`);
+  const data = await res.json();
+  const text = data.choices?.[0]?.message?.content ?? "";
+  return text.replace(/^\s*```(?:markdown)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
+}
+
+/** Figure integrity: every S$ amount in the LLM text must exist verbatim in the
+ * fact sheet. Catches both hallucinated numbers and the corrupted tokens the
+ * free endpoint sometimes injects mid-figure. */
+function assertFigures(facts, text) {
+  // Must end on a digit — [\d,]+ alone would swallow a sentence comma right
+  // after the amount ("S$120,000," ≠ "S$120,000") and false-reject good drafts.
+  const moneyRe = /S\$[\d,]*\d/g;
+  const allowed = new Set(facts.match(moneyRe) ?? []);
+  for (const amount of text.match(moneyRe) ?? []) {
+    if (!allowed.has(amount)) throw new Error(`LLM output contains a figure not in the fact sheet: ${amount}`);
+  }
+}
+
+const SYSTEM_PROMPT = [
+  "You are the report writer for HDBrain, a Singapore HDB resale flat advisor built as an NUS course project.",
+  "You will receive a rules-based fact sheet in markdown summarising one user's session.",
+  "Rewrite it into a warm, professional, personalised advisory report addressed to the reader as \"you\".",
+  "",
+  "Hard rules:",
+  "- Use ONLY facts and numbers from the fact sheet. Copy every figure exactly as written; never invent, estimate, round differently, or extrapolate any number.",
+  "- Keep exactly six sections with exactly these headings, in this order:",
+  "  \"## 1. Your budget at a glance\", \"## 2. Towns within your reach\", \"## 3. Flats you valued\",",
+  "  \"## 4. The 99-year clock: lease notes\", \"## 5. Market snapshot\", \"## 6. How to read this report\".",
+  "- Formatting: only \"## \" headings, \"- \" bullet lines, plain paragraphs, and **bold** spans.",
+  "  No tables, no code fences, no links, no italics, no other heading levels, no text before section 1 or after section 6.",
+  "- Do not simply restate the fact sheet's bullet layout. Write mostly short paragraphs that interpret what the numbers mean for this reader — e.g., how the valued flat compares to their maximum affordable price, how to read the 90% interval, what the remaining lease implies. Use bullets only where a plain list (like town names) is clearly better.",
+  "- Where the fact sheet says a station was not visited or data is missing, write one or two friendly sentences inviting the reader to visit that station, and nothing else. Never add suggestions of your own — no example towns, no price ranges, no market claims, no tips that are not in the fact sheet.",
+  "- Section 6 must preserve every limitation from the fact sheet (not a licensed valuation; training data ends 2023; interval coverage; schematic icons). Do not soften them.",
+  "- Total length 250-450 words.",
+].join("\n");
+
+export class LLMProvider {
+  constructor(config) {
+    this.config = config;
+  }
+
+  /** Async, unlike TemplateProvider.generate. Throws on network error, non-2xx,
+   * timeout, or malformed/preamble-only output — callers catch and fall back. */
+  async generate(journeyState) {
+    // The template output doubles as the fact sheet: it already contains every
+    // number the report is allowed to use, which is what makes "the LLM writes
+    // the prose, the engines own the figures" enforceable.
+    const templateBullet = "- Report drafted by: rules-based template (no LLM used).";
+    const facts = new TemplateProvider().generate(journeyState).replace(templateBullet + "\n", "").replace(templateBullet, "");
+
+    // The free gpt-oss-20b endpoint occasionally emits corrupted tokens; the
+    // structure/figure validation in attempt() catches the bad drafts, so one
+    // retry meaningfully raises the success rate before we fall back.
+    try {
+      return await this.attempt(facts);
+    } catch (err) {
+      console.warn("LLM draft rejected, retrying once:", err);
+      return await this.attempt(facts);
+    }
+  }
+
+  async attempt(facts) {
+    let md = await chatComplete(this.config, SYSTEM_PROMPT, `Fact sheet for this session:\n\n${facts}`);
+
+    // Drop any preamble before section 1 (renderMarkdown would silently eat it).
+    const firstHeading = md.indexOf("## ");
+    if (firstHeading > 0) md = md.slice(firstHeading);
+    if ((md.match(/^## /gm) || []).length < 3) throw new Error("LLM reply is not a structured report");
+    assertFigures(facts, md);
+
+    return `${md}\n- Report drafted by: ${this.config.model} via OpenRouter. ` +
+      "Every figure comes from HDBrain's rules-based engines; the LLM only wrote the prose.";
+  }
+}
+
+const EXPLAIN_SYSTEM = [
+  "You are the plain-language explainer for HDBrain, a Singapore HDB resale flat advisor built as an NUS course project.",
+  "You will receive a fact sheet about one flat valuation: the estimated price, its 90% interval, and the SHAP factor",
+  "contributions that pushed the estimate up or down versus the market-wide average.",
+  "Write 2-4 plain sentences for a first-time buyer explaining what drove this estimate.",
+  "",
+  "Hard rules:",
+  "- Use ONLY facts and numbers from the fact sheet. Copy every figure exactly as written; never invent or re-derive numbers.",
+  "- Focus on the two or three largest factors by absolute value and the direction each pushed the price.",
+  "- Plain sentences only: no headings, no bullet lists, no markdown formatting, no preamble.",
+  "- Do not give buying advice or opinions on whether this is a good deal.",
+].join("\n");
+
+/** ST3 "explain this estimate" (the report's little sibling): same fact-sheet-in,
+ * guarded-prose-out contract, scoped to a single valuation. Throws on any failure —
+ * the caller shows a quiet inline fallback. */
+export async function explainValuation(config, facts) {
+  const text = await chatComplete(config, EXPLAIN_SYSTEM, `Valuation fact sheet:\n\n${facts}`);
+  if (!text || text.includes("#")) throw new Error("LLM explanation is empty or misformatted");
+  assertFigures(facts, text);
+  return text;
 }

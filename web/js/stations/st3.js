@@ -6,6 +6,7 @@
  * form change, and the animated SHAP fly-in, are S3 (§8 S3 task 6).
  */
 import { listTowns, listFlatTypes, listStoreyOptions, queryValuation, queryShapTop6, queryComparables, queryGridBase } from "../engine/valuation.js";
+import { loadLLMConfig, explainValuation } from "../report/providers.js";
 import { recordValuation } from "../state.js";
 import { flatIconSvg } from "../flat-icons.js";
 import { featureLabel } from "../feature-labels.js";
@@ -128,7 +129,7 @@ export function initSt3() {
     recordValuation(result);
     const shapTop6 = queryShapTop6(query);
     const comparables = queryComparables(query);
-    renderResult(result, shapTop6);
+    renderResult(result, shapTop6, query);
     renderComparables(query.town, comparables);
     // Flip the layout from centred-form to form-left / result-right (CSS
     // animates the grid columns). Idempotent — re-valuing just re-renders.
@@ -136,7 +137,7 @@ export function initSt3() {
   });
 }
 
-function renderResult(result, shapTop6) {
+function renderResult(result, shapTop6, query) {
   const { predictedPrice, q05, q95 } = result;
   const pct = q95 > q05 ? ((predictedPrice - q05) / (q95 - q05)) * 100 : 50;
   const maxAbs = Math.max(...shapTop6.map((f) => Math.abs(f.value_sgd)), 1);
@@ -175,8 +176,56 @@ function renderResult(result, shapTop6) {
        flats to sell. The bars above (SHAP values &mdash; a standard way of attributing a
        prediction to its inputs) show how much each attribute pushed this estimate up (green)
        or down (red) versus the market-wide average.</p>
+    <div class="st3-explain" hidden>
+      <button type="button" class="btn-ghost btn-sm" id="st3-explain-btn">Explain in plain English</button>
+      <p class="st3-explain-text" hidden></p>
+    </div>
   `;
+  wireExplain(panel, result, shapTop6, query);
   animateResult(panel);
+}
+
+/** Same LLM contract as the ST7 report, scoped to one valuation: the SHAP rows and
+ * interval double as the fact sheet, the LLM only phrases them. The whole block
+ * stays hidden unless the (gitignored) LLM config exists — on a static deployment
+ * ST3 simply never shows the button, no dead control. */
+function wireExplain(panel, result, shapTop6, query) {
+  const container = panel.querySelector(".st3-explain");
+  const btn = panel.querySelector("#st3-explain-btn");
+  const out = panel.querySelector(".st3-explain-text");
+
+  loadLLMConfig().then((cfg) => {
+    if (!cfg) return;
+    container.hidden = false;
+
+    const money = (n) => `S$${Math.round(Math.abs(n)).toLocaleString("en-SG")}`;
+    const facts = [
+      `Flat: ${result.town}, ${result.flatType}, storey ${result.storeyRange}, ` +
+      `${query.floorAreaSqm} sqm, ${query.remainingLease} years of lease remaining.`,
+      `Estimated price: ${money(result.predictedPrice)} (90% interval ${money(result.q05)} to ${money(result.q95)}).`,
+      "Factor contributions versus the market-wide average (SHAP):",
+      ...shapTop6.map((f) =>
+        `- ${featureLabel(f.feature)}: ${f.value_sgd >= 0 ? "pushed the estimate up by" : "pulled the estimate down by"} ${money(f.value_sgd)}`),
+      "Model context: trained on resale data up to 2023; recent (2025) transactions ran 9-16% above such estimates.",
+    ].join("\n");
+
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      btn.textContent = "Reading the factors…";
+      try {
+        const text = await explainValuation(cfg, facts);
+        out.textContent = text;
+        out.hidden = false;
+        btn.hidden = true;
+      } catch (err) {
+        console.warn("Valuation explainer failed:", err);
+        out.textContent = "The explainer is unreachable right now. The SHAP bars above tell the same story: green pushed the price up, red pulled it down.";
+        out.hidden = false;
+        btn.disabled = false;
+        btn.textContent = "Try explaining again";
+      }
+    });
+  });
 }
 
 /** README §8 S3 task 6: the interval "bracket" resolves into place (the point

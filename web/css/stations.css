@@ -936,6 +936,22 @@
   color: var(--coral);
 }
 
+/* LLM plain-English explanation under the SHAP bars (2026-07-20). The output
+   sits in a quiet tinted inset — generated prose, visually distinct from the
+   card's own rules-based copy. */
+.st3-explain {
+  margin-top: var(--space-4);
+}
+
+.st3-explain-text {
+  font-size: var(--text-sm);
+  color: var(--ink-1);
+  background: var(--bg-2);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-4);
+  margin: 0;
+}
+
 .comp-header {
   justify-content: space-between;
   align-items: baseline;
@@ -1045,11 +1061,25 @@
 
 /* ================= ST7 Home ================= */
 
+/* The finale reads as centred closing credits (XCH's ask, 2026-07-20): the
+   station heading, report column, and footer all centre on the page axis.
+   Report prose itself stays left-aligned inside its centred reading column —
+   centring paragraph text would hurt readability, the column is what centres. */
+#st7-home .station-inner > h2,
+#st7-home .station-inner > .lede,
+#st7-home .station-inner > h3 {
+  text-align: center;
+}
+
+#st7-home .station-inner > .lede {
+  margin-inline: auto;
+}
+
 /* The one simplified otter easter egg (§7.9.1, scoped down 2026-07-17). */
 .st7-otter {
   color: var(--ink-2);
   width: 48px;
-  margin: var(--space-4) 0;
+  margin: var(--space-4) auto;
 }
 
 .st7-otter svg {
@@ -1059,11 +1089,26 @@
 }
 
 .st7-report-card {
-  margin: var(--space-6) 0 var(--space-8);
+  /* A centred reading column instead of a full-width card with a left-hugging
+     68ch text block (the pre-2026-07-20 layout the bug screenshot shows). */
+  max-width: 800px;
+  margin: var(--space-6) auto var(--space-8);
+}
+
+.st7-report-card .cluster {
+  justify-content: center;
 }
 
 .st7-report-body {
   margin-top: var(--space-6);
+  max-width: var(--prose-max);
+  margin-inline: auto;
+  text-align: left;
+}
+
+#st7-report-meta {
+  margin-inline: auto;
+  text-align: center;
 }
 
 .st7-report-body:empty {
@@ -1130,6 +1175,7 @@
   margin: var(--space-2) 0;
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: var(--space-2) var(--space-6);
 }
 
@@ -1142,6 +1188,18 @@
   border-top: var(--border-hairline);
   padding-top: var(--space-6);
   margin-top: var(--space-8);
+  /* Closing-credits alignment (2026-07-20), same axis as the report column. */
+  text-align: center;
+}
+
+.st7-footer .disclosure {
+  margin-inline: auto;
+  border-top: none;
+  padding-top: 0;
+}
+
+.st7-footer .cluster {
+  justify-content: center;
 }
 
 /* ================= Buildings backdrop for ST2-ST6 =================
@@ -1290,5 +1348,83 @@
     background: var(--glass-bg-strong);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
+  }
+}
+
+/* ================= Print sheet: ST7 "Download as PDF" (§7.9.5) =================
+   st7.js re-renders the report markdown into #print-sheet and sets
+   body.print-report before window.print(); these rules swap the dark app for a
+   light, paper-native report for exactly that print run. An organic Ctrl+P
+   (no class) prints the page unchanged. */
+#print-sheet {
+  display: none;
+}
+
+@media print {
+  body.print-report {
+    background: #fff;
+  }
+
+  body.print-report > :not(#print-sheet) {
+    display: none !important;
+  }
+
+  body.print-report #print-sheet {
+    display: block;
+    color: #333d4d;
+    font-family: var(--font-body);
+    font-size: 11pt;
+    line-height: 1.6;
+  }
+
+  #print-sheet .print-header {
+    border-bottom: 2px solid #10141c;
+    padding-bottom: 10pt;
+    margin-bottom: 4pt;
+  }
+
+  #print-sheet .print-header h1 {
+    font-family: var(--font-display);
+    font-size: 20pt;
+    color: #10141c;
+    margin: 0 0 4pt;
+  }
+
+  #print-sheet .print-header p {
+    font-size: 9.5pt;
+    color: #6b7686;
+    margin: 0;
+  }
+
+  #print-sheet .report-section {
+    border-top: 1px solid #d4d9e0;
+    padding: 12pt 0 4pt;
+  }
+
+  #print-sheet .report-section:first-of-type {
+    border-top: none;
+  }
+
+  #print-sheet .report-section h3 {
+    font-size: 13pt;
+    color: #10141c;
+    break-after: avoid;
+  }
+
+  #print-sheet .report-section-num {
+    background: var(--coral);
+    color: #10141c;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  #print-sheet p,
+  #print-sheet li {
+    color: #333d4d;
+    break-inside: avoid;
+  }
+
+  #print-sheet strong {
+    color: #10141c;
   }
 }
