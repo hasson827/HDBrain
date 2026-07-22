@@ -116,8 +116,8 @@ HDBrain's contribution is the **integration**: an interpretable ensemble AVM for
 
 | Requirement | Status |
 |---|---|
-| ≥ 8 research papers | ✅ 26 papers reviewed |
-| ≥ 5 published within the last five years (2021–2026) | ✅ 20 of 26 (all except Rosen 1974; Giglio et al. 2015; Lundberg & Lee 2017; Bellotti 2017; Romano et al. 2019; Ezennia & Hoskara 2019) |
+| ≥ 8 research papers | ✅ 31 papers reviewed |
+| ≥ 5 published within the last five years (2021–2026) | ✅ 25 of 31 (all except Rosen 1974; Giglio et al. 2015; Lundberg & Lee 2017; Bellotti 2017; Romano et al. 2019; Ezennia & Hoskara 2019) |
 | ≥ 2 from reputable publishers (IEEE, ACM, Springer, Elsevier, Nature, …) | ✅ Springer (Tekouabou 2024; An 2025; Deng 2025; Das 2021; Bellotti 2017); Elsevier (Rico-Juan & Taltavull 2021); IEEE (Wang 2021; Yang 2022; Peng 2023); ACM (Liu 2021; Zhang 2023); Emerald (Teoh 2023); Oxford UP (Giglio 2015); UChicago Press (Rosen 1974) |
 | ≥ 1 survey paper | ✅ 5 surveys: Geerts et al. (2023); Tekouabou et al. (2024); El Jaouhari et al. (2024); Lee et al. (2024, preprint); Angelopoulos & Bates (2023); plus qualitative review Ezennia & Hoskara (2019) |
 | Identifies approaches, strengths, limitations, gaps, opportunities | ✅ Per-stream strengths/limitations and consolidated gap analysis (Section 10) |
