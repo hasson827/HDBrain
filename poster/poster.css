@@ -1,0 +1,1372 @@
+/* =========================================================================
+ * HDBrain — A1 conference poster (594 x 841 mm, portrait), v1 layout
+ *
+ * This is a PRINT artefact, not a web page. Consequences that override the
+ * usual frontend rules, on purpose:
+ *   - No motion, no hover states, no dark-mode toggle, no responsive
+ *     breakpoints. The canvas is one fixed physical size.
+ *   - Type scale is far above web norms: judges read this from ~1.5 m away.
+ *     poster.md C2.5 sets the floors (title >= 120pt, section head >= 38pt,
+ *     body >= 24pt, caption >= 18pt) and every size here is checked against
+ *     them. Bar labels and diagram captions sit at 17-18pt, the documented
+ *     floor for secondary information.
+ *   - Secondary ink is #B8C4D4, NOT the website's #93A1B5. Screen contrast is
+ *     not print contrast (poster.md C7.4 constraint #3).
+ *
+ * Everything else, palette, glass material, font feel, is deliberately the
+ * same system as HDBrain/web so the poster and the product read as one thing.
+ *
+ * WHAT CHANGED FROM v0: the staggered layout is gone. v0 offset its panels so
+ * the spine had somewhere to bend, which left neighbouring cards with
+ * mismatched top and bottom edges. v1 is a strict two-column grid (poster_v1
+ * §1.1) and the spine bends in the gutters instead. Every panel edge that is
+ * meant to align, aligns.
+ * ========================================================================= */
+
+/* ---- Self-hosted fonts. No CDN: headless Chrome may have no network during
+   PDF export, and a fallback to a system font would silently wreck the
+   layout. Archivo carries the display voice (variable width, so headings can
+   be set expanded without a second file); Inter carries running text. Both
+   are variable and both are OFL. ---------------------------------------- */
+@font-face {
+  font-family: "Archivo";
+  font-style: normal;
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  font-display: block;
+  src: url("assets/fonts/archivo-latin.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: block;
+  src: url("assets/fonts/inter-latin.woff2") format("woff2");
+}
+
+:root {
+  /* ---- Canvas geometry. Change these two and the whole poster rescales. -- */
+  --page-w: 594mm;
+  --page-h: 841mm;
+  --margin: 20mm;
+  /* Official NUS footer band, 4320x392 at 594mm width. Derived from the
+     bitmap, never guessed, so the school's artwork can never end up stretched.
+     The two rows prepare_assets.py trims off the top were a crop artefact and
+     printed as a white hairline across the whole page. */
+  --band-h: 53.9mm;
+
+  /* ---- Palette, lifted verbatim from HDBrain/web/css/tokens.css ---------- */
+  --bg-0: #0a1220;
+  --bg-1: #101a2c;
+  --bg-2: #16233a;
+  --coral: #ff6b6b;
+  --mint: #06d6a0;
+  --mango: #ffd166;
+  --strait: #118ab2;
+  /* Print lift of --strait. #118ab2 clears AA against the glass but only just
+     (4.5:1); the diagram's stage titles and icons are small, so they take the
+     lifted tint instead. Same reasoning as --ink-2 vs the website's #93A1B5. */
+  --strait-lift: #45b8dd;
+
+  /* ---- Ink ramp. Body is near-white; secondary is lifted for print. ------
+     The hierarchy is carried by the ramp, not by colour: warm-white body,
+     cool-grey secondary, coral for the numbers that matter, and hue on data
+     only. ----------------------------------------------------------------- */
+  --ink-1: #eef2f8;
+  --ink-2: #b8c4d4;
+  --ink-3: #8fa0b8; /* captions / provenance only, never running text */
+
+  /* ---- Glass. The rgba base alone must already look right: Chrome's print
+     pipeline drops backdrop-filter unpredictably (poster.md C7.4 risk #1),
+     so blur is an enhancement, never the thing holding the panel up. ----- */
+  --glass: rgba(14, 25, 42, 0.72);
+  --glass-strong: rgba(12, 21, 36, 0.82);
+  --glass-blur: blur(18px) saturate(150%);
+  --hairline: rgba(232, 237, 245, 0.14);
+  --inset: rgba(255, 255, 255, 0.045); /* blocks nested inside a glass panel */
+
+  /* ---- Corner radius, one documented scale, no ad-hoc values -------------
+     panel 8mm  >  nested block 4mm  >  image frame 3mm  >  pill 999px    */
+  --r-panel: 8mm;
+  --r-block: 4mm;
+  --r-image: 3mm;
+
+  /* ---- Type scale. 1rem = 24pt = the body floor, so every size below is
+     legible-at-1.5m by construction. ------------------------------------- */
+  font-size: 8.467mm; /* 24pt */
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: var(--page-w);
+  height: var(--page-h);
+}
+
+body {
+  background: var(--bg-0);
+  color: var(--ink-1);
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1.26;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+@page {
+  size: 594mm 841mm;
+  margin: 0;
+}
+
+/* =========================================================================
+ * LAYER 0/1 — background photograph + the heavy dark scrim
+ * ========================================================================= */
+.poster {
+  position: relative;
+  width: var(--page-w);
+  height: var(--page-h);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.bg-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 55%;
+  /* Crop, upscale, grade and blur are all baked into the asset by
+     prepare_background.py. Doing any of it here in CSS makes Chrome's print
+     pipeline rasterise the whole canvas as one bitmap - it took the exported
+     PDF from 3 MB to 77 MB. */
+  z-index: 0;
+}
+
+.bg-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  /* Flat fills, not gradients: large dark gradients are the #1 cause of
+     banding on a poster printer (poster.md C7.4 risk #2). */
+  background: rgba(6, 11, 21, 0.62);
+}
+
+/* A second, very slight vertical lift so the header area reads a touch
+   deeper than the mid-canvas. One stop, low delta, safe to print. */
+.bg-scrim::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(4, 8, 16, 0.42) 0%,
+    rgba(4, 8, 16, 0) 28%,
+    rgba(4, 8, 16, 0) 72%,
+    rgba(4, 8, 16, 0.34) 100%
+  );
+}
+
+/* =========================================================================
+ * THE SPINE — the illustration that threads the panels together
+ *
+ * The product's own metaphor is an MRT line with eight stations, and
+ * mrt_dist is a real model feature, so the poster is routed like a transit
+ * map: one continuous line enters under the masthead, runs down the left
+ * margin, crosses to the centre gutter, drops through it, crosses again and
+ * finishes down the right margin at the footer band.
+ *
+ * z-index 2 against the panels' 3, so the line disappears under a panel the
+ * way a rail line disappears under buildings and only surfaces in the 8mm
+ * row gaps, the 14mm centre gutter and the two page margins.
+ *
+ * v0 staggered the panels to give this line somewhere to bend. v1 does not:
+ * the gutters are the bend, which is why the panels can now align.
+ * ========================================================================= */
+.spine {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.spine .route {
+  fill: none;
+  stroke: var(--coral);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.85;
+}
+
+.spine .route-glow {
+  fill: none;
+  stroke: var(--coral);
+  stroke-width: 5.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.13;
+}
+
+/* Line termini only. v0 sprinkled stops along the route; with the trains in
+   place those read as decoration, so the only markers left are the two ends
+   of the line, which mean something. */
+.spine .terminus {
+  fill: var(--bg-0);
+  stroke: var(--coral);
+  stroke-width: 1.8;
+}
+
+/* ---- Rolling stock. The full four-car SMRT set, cut out of clips/MRT.png by
+   prepare_assets.py. Sized to sit entirely inside a gutter: 42mm long by
+   4.31mm across, against an 8mm row gap, a 14mm centre gutter and 20mm page
+   margins. It never touches a panel, which is the whole constraint, this is
+   ornament and must not cost content space. ---------------------------- */
+.train {
+  position: absolute;
+  z-index: 2;
+  width: 42mm; /* along the direction of travel */
+  height: auto; /* 9.746:1 source aspect -> 4.31mm across */
+  left: var(--tx);
+  top: var(--ty);
+  opacity: 0.95;
+  /* translate(-50%,-50%) centres the car on the route, then the rotation
+     turns its nose into the direction of travel. Order matters: translate
+     first, or the offset itself gets rotated. */
+  transform: translate(-50%, -50%) rotate(var(--rot, 0deg));
+}
+
+/* Southbound: the source car noses left, so a -90deg turn points it down. */
+.train--down {
+  --rot: -90deg;
+}
+
+/* Eastbound: mirror rather than rotate, so the car stays upright. */
+.train--east {
+  transform: translate(-50%, -50%) scaleX(-1);
+}
+
+/* =========================================================================
+ * PANELS — frosted glass, absolutely placed on a strict two-column grid
+ *
+ * Absolute placement (not flow) is the right call for a poster: the canvas is
+ * fixed, the spine's SVG coordinates have to agree with the panel edges, and
+ * "it reflowed" is a failure mode a print artefact should not have. Each panel
+ * declares --x/--y/--w/--h in millimetres; the grid behind those numbers is
+ * L = x20 w270, centre gutter 14, R = x304 w270, full width = x20 w554, with
+ * an 8mm gap on every row (poster_v1 §1.1).
+ * ========================================================================= */
+.panel {
+  position: absolute;
+  z-index: 3;
+  left: var(--x);
+  top: var(--y);
+  width: var(--w);
+  height: var(--h);
+  padding: var(--pad-y, 6mm) 7mm;
+  border-radius: var(--r-panel);
+  background: var(--glass);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 0.35mm solid var(--hairline);
+  /* Top highlight only, the 1px inner light edge that makes glass read as a
+     physical pane rather than a flat tint. */
+  box-shadow: inset 0 0.35mm 0 rgba(255, 255, 255, 0.22),
+    0 4mm 14mm rgba(2, 6, 16, 0.4);
+  overflow: hidden;
+}
+
+/* The one panel that has to out-shout the others: Innovation is 20 of the 100
+   marks. It gets a stronger fill and a coral edge. Nothing else does. */
+.panel--hero {
+  background: var(--glass-strong);
+  border-color: rgba(255, 107, 107, 0.42);
+  box-shadow: inset 0 0.35mm 0 rgba(255, 255, 255, 0.26),
+    0 5mm 18mm rgba(2, 6, 16, 0.5);
+}
+
+/* The honest-finding panel is the differentiator and it is a caveat, so it
+   carries the warning hue on its edge rather than the accent. */
+.panel--caution {
+  border-color: rgba(255, 209, 102, 0.42);
+}
+
+/* =========================================================================
+ * TYPE
+ * ========================================================================= */
+.h-section {
+  font-family: "Archivo", sans-serif;
+  font-weight: 800;
+  font-stretch: 115%;
+  font-size: 1.62rem; /* ~39pt */
+  line-height: 0.98;
+  letter-spacing: -0.022em;
+  text-transform: uppercase;
+  color: var(--ink-1);
+  margin-bottom: 0.8mm;
+}
+
+.h-section .mark {
+  color: var(--coral);
+}
+
+/* One claim sentence per panel. poster_v1 §2: the evidence is the graphic,
+   this line exists to tell the reader what the graphic means. */
+.h-sub {
+  font-size: 0.78rem; /* ~19pt */
+  font-weight: 450;
+  color: var(--ink-2);
+  line-height: 1.24;
+  margin-bottom: 2mm;
+  text-wrap: pretty;
+}
+
+p {
+  font-size: 0.86rem;
+  color: var(--ink-1);
+  line-height: 1.26;
+  text-wrap: pretty;
+}
+
+strong {
+  font-weight: 650;
+  color: #fff;
+}
+
+em {
+  font-style: normal;
+  color: var(--coral);
+  font-weight: 600;
+}
+
+/* Neither Archivo nor Inter carries U+2192, U+2264, U+2265 or U+2605. Set as
+   text they fall back to whatever the renderer happens to find, which put a
+   subsetted Microsoft YaHei into the exported PDF. The comparison operators
+   and the star were rewritten as words; the arrow is load-bearing, so it is
+   drawn instead. Every mark on the poster is now in one of the two embedded
+   faces. */
+.arw {
+  width: 1.15em;
+  height: 0.5em;
+  margin: 0 0.1em;
+  vertical-align: 0.02em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cap {
+  font-size: 0.72rem; /* ~17pt, the secondary-information floor */
+  color: var(--ink-3);
+  line-height: 1.2;
+}
+
+/* =========================================================================
+ * MASTHEAD — no panel. The title sits directly on the photograph, which is
+ * what makes the first 46mm of the page read as a cover rather than a card.
+ * ========================================================================= */
+.masthead {
+  position: absolute;
+  z-index: 3;
+  left: var(--margin);
+  top: 17mm;
+  width: calc(var(--page-w) - var(--margin) * 2);
+  height: 46mm;
+  display: flex;
+  flex-direction: column;
+}
+
+.mast-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12mm;
+  flex: 1;
+}
+
+.wordmark {
+  font-family: "Archivo", sans-serif;
+  font-weight: 800;
+  font-stretch: 122%;
+  font-size: 4.75rem; /* ~114pt cap, the tallest the 46mm band allows */
+  line-height: 0.84;
+  letter-spacing: -0.026em;
+  color: #fff;
+}
+
+.wordmark .brain {
+  color: var(--coral);
+}
+
+.byline {
+  text-align: right;
+  font-size: 0.72rem;
+  line-height: 1.38;
+  color: var(--ink-2);
+  padding-top: 0.8mm;
+}
+
+.byline .course {
+  font-family: "Archivo", sans-serif;
+  font-weight: 700;
+  font-stretch: 112%;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  color: var(--coral);
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 1.2mm;
+}
+
+.subtitle {
+  border-top: 0.5mm solid rgba(255, 107, 107, 0.6);
+  padding-top: 2mm;
+  font-family: "Archivo", sans-serif;
+  font-weight: 500;
+  font-stretch: 106%;
+  font-size: 0.94rem; /* ~23pt */
+  line-height: 1.1;
+  color: var(--ink-1);
+}
+
+/* =========================================================================
+ * PANEL 2 — THE PROBLEM
+ * ========================================================================= */
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 4mm;
+  margin-top: auto;
+  padding-top: 3mm;
+  border-top: 0.35mm solid var(--hairline);
+}
+
+.stat .v {
+  font-family: "Archivo", sans-serif;
+  font-weight: 800;
+  font-stretch: 110%;
+  font-size: 1.95rem; /* ~47pt */
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+  color: var(--coral);
+  white-space: nowrap;
+}
+
+.stat .u {
+  font-size: 0.7rem;
+  color: var(--ink-2);
+  line-height: 1.18;
+}
+
+/* Panels 2 and 3 push their last block to the bottom edge so the two cards
+   in row R1 agree on more than their outer rectangle. */
+.panel--flow {
+  display: flex;
+  flex-direction: column;
+}
+
+/* =========================================================================
+ * PANEL 3 — INNOVATION. The only numbered sequence on the poster, and it is
+ * a real one: three distinct contributions, ordered by weight.
+ * ========================================================================= */
+.diffs {
+  display: grid;
+  gap: 2.2mm;
+  margin-top: auto;
+}
+
+.diff {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 3mm;
+  align-items: baseline;
+}
+
+.diff .n {
+  font-family: "Archivo", sans-serif;
+  font-weight: 800;
+  font-stretch: 108%;
+  font-size: 0.92rem;
+  line-height: 1;
+  color: var(--coral);
+}
+
+.diff h4 {
+  font-family: "Archivo", sans-serif;
+  font-weight: 700;
+  font-stretch: 108%;
+  font-size: 0.8rem;
+  line-height: 1.05;
+  color: #fff;
+  margin-bottom: 0.6mm;
+}
+
+.diff p {
+  font-size: 0.72rem;
+  color: var(--ink-2);
+  line-height: 1.14;
+}
+
+/* =========================================================================
+ * PANEL 4 — AI ARCHITECTURE
+ *
+ * Redrawn from the backend's hero_architecture.png rather than placed as that
+ * bitmap. Two reasons, both fatal to the raster on a printed A1:
+ *
+ *   1. RESOLUTION. The source is 3000px, AI-generated, so it cannot simply be
+ *      re-exported larger. At the 494mm the panel gives it that is ~154 dpi,
+ *      and more to the point its baked-in body text lands at roughly 6pt on
+ *      paper. Nothing below the 17pt secondary floor belongs on this poster.
+ *   2. MATERIAL. Its background is #000411, a hard black rectangle sitting on
+ *      a glass panel over a photograph. It read as pasted on.
+ *
+ * Every label, number and stage name below is transcribed verbatim from that
+ * figure, so the content is the backend's; only the rendering is ours. The
+ * PNG stays in assets/charts/ as the reference.
+ *
+ * Being CSS, it is vector in the PDF (infinite resolution), it is set in the
+ * poster's own two fonts at the poster's own type scale, and its background is
+ * the glass itself rather than an opaque tile.
+ * ========================================================================= */
+.arch-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8mm;
+}
+
+.tech-strip {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 2mm;
+}
+
+.tech-strip b {
+  font-family: "Archivo", sans-serif;
+  font-weight: 650;
+  font-stretch: 106%;
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+  padding: 1mm 2.8mm;
+  border-radius: 999px;
+  border: 0.35mm solid rgba(255, 107, 107, 0.42);
+  color: var(--ink-1);
+  white-space: nowrap;
+}
+
+/* Five stages and the four connectors between them. Column widths are set by
+   the longest line each stage carries, then rebalanced against how tall each
+   stage's stack turned out. The total is 539mm, the panel's content width to
+   the millimetre.
+
+   The height is pinned rather than flexed: the connector SVGs are drawn 1:1
+   against it (viewBox="0 0 11 90" at width 11mm, height 90mm), so a millimetre
+   in that artwork is a millimetre on paper and the champion elbow can be
+   aimed at a specific row. Change this and re-derive the ROW centres in the
+   markup. */
+.pipe {
+  display: grid;
+  grid-template-columns: 106mm 11mm 102mm 11mm 86mm 11mm 94mm 11mm 107mm;
+  margin-top: 3mm;
+  height: 90mm;
+}
+
+.stg {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Blue, not coral. Coral is the poster's structural hue and it was already
+   carrying the panel heading directly above these, so the five stage names
+   were competing with it. Centred over their own column rather than ragged
+   left, because each one labels a block, not a line. */
+.stg h3 {
+  font-family: "Archivo", sans-serif;
+  font-weight: 700;
+  font-stretch: 112%;
+  font-size: 0.72rem;
+  line-height: 1.06;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--strait-lift);
+  margin-bottom: 2.4mm;
+}
+
+/* space-between rather than a fixed gap: the five stages carry three and six
+   blocks respectively, and this is what makes their top and bottom edges
+   agree anyway. */
+.stg .cards {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex: 1;
+  min-height: 0;
+  padding: 2.5mm;
+  border-radius: 5mm;
+  background: rgba(255, 255, 255, 0.028);
+  border: 0.3mm solid rgba(232, 237, 245, 0.1);
+}
+
+.cd {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2.6mm;
+  align-items: center;
+  padding: 2.2mm 2.6mm;
+  border-radius: 3.4mm;
+  background: rgba(255, 255, 255, 0.06);
+  border: 0.35mm solid var(--hairline);
+}
+
+.cd b {
+  display: block;
+  font-family: "Archivo", sans-serif;
+  font-weight: 700;
+  font-stretch: 106%;
+  font-size: 0.74rem;
+  line-height: 1.06;
+  color: #fff;
+}
+
+/* Direct child only. `.cd span` also caught the nested [data-fig] spans and
+   made each injected figure its own block, which silently turned a two-line
+   card into a five-line one. */
+.cd > div > span {
+  display: block;
+  margin-top: 0.7mm;
+  font-size: 0.7rem;
+  line-height: 1.14;
+  color: var(--ink-2);
+}
+
+/* Keeps a date range from breaking after the hyphen in "2026-07". */
+.cd .nb {
+  color: inherit;
+  font-weight: inherit;
+  white-space: nowrap;
+}
+
+/* Feature-factory blocks are statements, not name-plus-gloss, so the running
+   text is the whole card and steps up to the primary ink. */
+.cd--plain > div > span {
+  margin-top: 0;
+  font-size: 0.74rem;
+  line-height: 1.14;
+  color: var(--ink-1);
+}
+
+/* The one thing the whole pipeline is pointed at. Mint is the poster's
+   positive-data hue and it appears exactly twice here: the champion model and
+   what the champion is turned into. */
+.cd--out {
+  background: rgba(6, 214, 160, 0.1);
+  border-color: rgba(6, 214, 160, 0.45);
+}
+
+.cd--out b {
+  color: var(--mint);
+}
+
+/* ---- Icons. Same line-art system as the product's flat-icons.js: 64x64,
+   no fill, currentColor at 2.4 units, round caps. They take the diagram's own
+   blue so coral stays reserved for structure, and the two mint blocks pull
+   their icon along with them. --------------------------------------------- */
+.ico {
+  width: 8mm;
+  height: 8mm;
+  flex: none;
+  color: var(--strait-lift);
+  /* fill/stroke are inherited properties, so they cross the <use> shadow
+     boundary into the symbol's paths. Setting them here rather than on each
+     <symbol> keeps one source of truth for the whole icon set; without it the
+     symbols take the SVG default of solid black fill and print as blobs. */
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cd--out .ico {
+  color: var(--mint);
+}
+
+/* ---- The six-model ladder, compact enough to stay one row per model. --- */
+.mdl {
+  display: flex;
+  align-items: center;
+  gap: 2.4mm;
+  padding: 1.4mm 2.6mm;
+  border-radius: 2.6mm;
+  background: rgba(255, 255, 255, 0.06);
+  border: 0.35mm solid var(--hairline);
+  font-family: "Archivo", sans-serif;
+  font-weight: 650;
+  font-stretch: 104%;
+  font-size: 0.72rem;
+  line-height: 1.06;
+  color: var(--ink-1);
+  white-space: nowrap;
+}
+
+.mdl .ico {
+  width: 6mm;
+  height: 6mm;
+}
+
+.mdl.is-win {
+  background: rgba(6, 214, 160, 0.12);
+  border-color: rgba(6, 214, 160, 0.5);
+  color: var(--mint);
+  font-weight: 750;
+}
+
+.mdl.is-win .ico {
+  color: var(--mint);
+}
+
+.mdl.is-win i {
+  font-style: normal;
+  font-weight: 650;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.85;
+  margin-left: 1.2mm;
+}
+
+/* ---- Connectors. Every arrow runs container edge to container edge, never
+   out of an individual card. Three sit on the containers' shared centre line
+   at y=49.4; the fourth leaves at y=82, the champion row's height, because
+   quantile regression, TreeSHAP and the ablation all run on XGBoost alone and
+   not on the other five. It turns exactly twice: right to up, then up to
+   right. Coordinates are millimetres, 1:1 with the 90mm pipe. ------------ */
+.lnk-cell {
+  display: flex;
+  align-items: stretch;
+}
+
+.lnk {
+  width: 11mm;
+  height: 90mm;
+}
+
+.lnk .sh {
+  fill: none;
+  stroke: var(--coral);
+  stroke-width: 0.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.9;
+}
+
+.lnk .hd {
+  fill: var(--coral);
+  stroke: none;
+  opacity: 0.9;
+}
+
+/* The champion path, in the same mint the champion row and the final output
+   carry. Reading the diagram left to right, mint is the thread. */
+.lnk--champ .sh {
+  stroke: var(--mint);
+  stroke-width: 0.62;
+  opacity: 1;
+}
+
+.lnk--champ .hd {
+  fill: var(--mint);
+  opacity: 1;
+}
+
+/* =========================================================================
+ * DATA GRAPHICS — all built from the real numbers in figures.js
+ * ========================================================================= */
+
+/* ---- Horizontal bar rows, shared by the arena and the SHAP chart. ------ */
+.bars {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.8mm 2.5mm;
+  align-items: center;
+}
+
+.bars .lbl {
+  font-size: 0.72rem;
+  line-height: 1.05;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.bars .bar {
+  height: 2.8mm;
+  border-radius: 1.4mm;
+  background: var(--strait);
+  opacity: 0.75;
+}
+
+.bars .row-win .bar {
+  background: var(--mint);
+  opacity: 1;
+}
+
+.bars .lbl.row-win,
+.bars .fig.row-win {
+  color: var(--mint);
+  font-weight: 650;
+}
+
+.bars .row-bad .bar {
+  background: #55618a;
+}
+
+.bars .fig.row-bad {
+  color: var(--ink-3);
+}
+
+.bars .fig {
+  font-family: "Archivo", sans-serif;
+  font-weight: 700;
+  font-size: 0.72rem;
+  line-height: 1.05;
+  color: var(--ink-1);
+  white-space: nowrap;
+}
+
+/* SHAP tints coral; it is attribution, not competition. */
+.bars--shap .bar {
+  background: var(--coral);
+  opacity: 0.85;
+}
+
+/* A one-line ablation result standing in for a second bar chart. The whole
+   finding is "remove year and R2 falls", which does not need five rows. */
+.abl {
+  display: flex;
+  align-items: center;
+  gap: 3mm;
+  margin-top: auto;
+  padding-top: 2mm;
+  border-top: 0.35mm solid var(--hairline);
+  font-size: 0.72rem;
+  line-height: 1.16;
+  color: var(--ink-2);
+}
+
+.abl b {
+  font-family: "Archivo", sans-serif;
+  font-weight: 700;
+  font-stretch: 108%;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mango);
+  white-space: nowrap;
+}
+
+/* =========================================================================
+ * PANEL 7 — THE HONEST FINDING. Two coverage rows against a 90% nominal
+ * reference. The bars and the numbers are the same statement, so there is
+ * only one of each, not a chart plus a restatement of the chart.
+ * ========================================================================= */
+.honest {
+  display: grid;
+  grid-template-columns: 300mm 1fr;
+  gap: 10mm;
+  height: 100%;
+}
+
+.cover-rows {
+  display: grid;
+  align-content: center;
+  gap: 3.4mm;
+}
+
+.cover {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1mm 3mm;
+  align-items: baseline;
+}
+
+.cover .k {
+  font-size: 0.7rem;
+  color: var(--ink-2);
+  line-height: 1.1;
+}
+
+.cover .v {
+  font-family: "Archivo", sans-serif;
+  font-weight: 800;
+  font-stretch: 108%;
+  font-size: 1.35rem;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.cover--ok .v {
+  color: var(--mint);
+}
+
+.cover--bad .v {
+  color: var(--mango);
+}
+
+/* The track carries the 90% nominal target as a hairline, so the reader can
+   see the shortfall rather than being told about it. */
+.cover .track {
+  grid-column: 1 / -1;
+  position: relative;
+  height: 3mm;
+  border-radius: 1.5mm;
+  background: #1c2740;
+  overflow: hidden;
+}
+
+.cover .track i {
+  display: block;
+  height: 100%;
+  border-radius: 1.5mm;
+}
+
+.cover--ok .track i {
+  background: var(--mint);
+}
+
+.cover--bad .track i {
+  background: var(--mango);
+}
+
+.cover .track::after {
+  content: "";
+  position: absolute;
+  left: 90%;
+  top: -0.6mm;
+  bottom: -0.6mm;
+  width: 0.5mm;
+  background: var(--ink-1);
+  opacity: 0.85;
+}
+
+/* =========================================================================
+ * PANEL 8 — AFFORDABILITY ENGINE. Three columns: the rule cascade that
+ * produces the number, the 1,534-profile grid it produces, and the shipped
+ * interface it produces.
+ * ========================================================================= */
+/* Heading and claim share one row. On a 270mm panel that buys back the ~8mm
+   a stacked claim would cost; on a 554mm panel it puts the claim opposite the
+   heading where there is nothing else to do with the width. */
+.panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6mm;
+}
+
+.panel-head .h-sub {
+  margin-bottom: 0;
+}
+
+/* Full-width panels only: the claim is far enough from the heading that
+   ragging it toward the heading reads better than ragging it away. */
+.panel-head--split {
+  gap: 10mm;
+}
+
+.panel-head--split .h-sub {
+  max-width: 300mm;
+  text-align: right;
+}
+
+.aff-grid {
+  display: grid;
+  grid-template-columns: 178mm 226mm 116mm;
+  gap: 10mm;
+  margin-top: 3mm;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ---- The MAS rule cascade. Four states, three transformations. --------
+   space-between rather than a fixed rhythm, so the first node and the last
+   sit exactly on the column's top and bottom edges and the cascade agrees
+   with the two columns beside it. */
+.cascade {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.cascade .node {
+  padding: 2.2mm 3mm;
+  border-radius: var(--r-block);
+  background: var(--inset);
+  border: 0.35mm solid var(--hairline);
+  font-family: "Archivo", sans-serif;
+  font-weight: 700;
+  font-stretch: 108%;
+  font-size: 0.78rem;
+  line-height: 1.06;
+  color: var(--ink-1);
+}
+
+.cascade .node.is-out {
+  background: rgba(6, 214, 160, 0.12);
+  border-color: rgba(6, 214, 160, 0.45);
+  color: var(--mint);
+}
+
+.cascade .step {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2.5mm;
+  align-items: center;
+  padding: 1.5mm 0 1.5mm 3mm;
+  font-size: 0.7rem;
+  line-height: 1.14;
+  color: var(--ink-2);
+}
+
+/* A short coral rule standing in for the arrowhead, so the cascade reads as
+   one continuous descent instead of four separate boxes. */
+.cascade .step::before {
+  content: "";
+  width: 0.5mm;
+  height: 100%;
+  min-height: 4mm;
+  background: var(--coral);
+  opacity: 0.75;
+  border-radius: 0.25mm;
+}
+
+/* ---- The 1,534-cell lattice. One cell = one (town x flat type x storey)
+   profile. Lit cells are what a median-income household can reach. This is
+   the same "City of Lights" encoding the product uses, which is why it is
+   worth the DOM cost of ~1,575 nodes. ---------------------------------- */
+.lattice {
+  /* 118 columns because 1534 = 118 x 13 exactly, so the grid is a clean
+     rectangle with no ragged final row. Change the profile count and this
+     number has to be re-factorised, not nudged. */
+  display: grid;
+  grid-template-columns: repeat(118, 1fr);
+  gap: 0.22mm;
+}
+
+/* The unlit cell has to be dark enough to read as an unlit window and light
+   enough that the reader can see how much of the city is dark. At the panel's
+   own #0e192a it vanished and the graphic read as "almost all affordable". */
+.lattice i {
+  aspect-ratio: 1;
+  border-radius: 0.2mm;
+  background: #333f5c;
+}
+
+.lattice i.on {
+  background: var(--mint);
+}
+
+.ladder {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 1mm 3mm;
+  align-items: center;
+  margin-top: auto;
+}
+
+.ladder .inc {
+  font-size: 0.7rem;
+  line-height: 1.05;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.ladder .track {
+  height: 2.6mm;
+  border-radius: 1.3mm;
+  background: #1c2740;
+  overflow: hidden;
+}
+
+.ladder .track b {
+  display: block;
+  height: 100%;
+  background: var(--mint);
+}
+
+.ladder .val {
+  font-family: "Archivo", sans-serif;
+  font-weight: 700;
+  font-size: 0.72rem;
+  line-height: 1.05;
+  color: var(--ink-1);
+  white-space: nowrap;
+}
+
+/* The median-income row is the one the eye should land on. The modifier
+   lands on all three cells of that grid row, since a CSS grid has no row
+   element to hang it on. */
+.ladder .inc.row-hi,
+.ladder .val.row-hi {
+  color: var(--coral);
+}
+
+.ladder .track.row-hi b {
+  background: var(--coral);
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.col > .cap {
+  margin-top: 2mm;
+}
+
+/* =========================================================================
+ * PANEL 9 — THE PRODUCT
+ * ========================================================================= */
+.prod-grid {
+  display: grid;
+  grid-template-columns: 155mm 112mm 255mm;
+  gap: 9mm;
+  margin-top: 3mm;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Both screenshots get the same frame height so the two captions under them
+   sit on one line, and the line map's last station lands on the same
+   baseline. Fixed height plus cover, not intrinsic height. */
+.shot {
+  min-height: 0; /* the frame is sized by `flex: 1` in the markup */
+  border-radius: var(--r-image);
+  overflow: hidden;
+  border: 0.35mm solid var(--hairline);
+  background: var(--inset);
+}
+
+.shot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+}
+
+.shot-cap {
+  margin-top: 2.2mm;
+  font-size: 0.72rem;
+  line-height: 1.16;
+  color: var(--ink-2);
+}
+
+.shot-cap b {
+  font-family: "Archivo", sans-serif;
+  font-weight: 700;
+  font-stretch: 108%;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--coral);
+}
+
+/* ---- The HDBrain Line: the product's eight stations, drawn as the line
+   the whole poster is already routed along. Same coral, same grammar. --- */
+.line-map {
+  display: grid;
+  grid-auto-rows: 1fr;
+  position: relative;
+  padding-left: 9mm;
+}
+
+/* One stroke behind all eight stops, inset so it terminates at the first and
+   last station rather than running off the ends. The insets are the measured
+   dot centres for eight rows in this column, not round numbers: change the
+   station count and they have to be re-derived. */
+.line-map::before {
+  content: "";
+  position: absolute;
+  left: 2.6mm;
+  top: 4mm;
+  bottom: 10mm;
+  width: 0.9mm;
+  border-radius: 0.45mm;
+  background: var(--coral);
+  opacity: 0.8;
+}
+
+.stn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
+}
+
+.stn b {
+  display: block;
+  position: relative;
+  font-family: "Archivo", sans-serif;
+  font-weight: 700;
+  font-stretch: 108%;
+  font-size: 0.78rem;
+  line-height: 1.05;
+  color: #fff;
+}
+
+/* The stop hangs off the station name, not off the row, so it always lands on
+   the name's optical centre whatever the descriptor below it does. */
+.stn b::before {
+  content: "";
+  position: absolute;
+  left: -7.25mm;
+  top: 50%;
+  width: 2.6mm;
+  height: 2.6mm;
+  margin-top: -1.3mm;
+  border-radius: 50%;
+  background: var(--bg-0);
+  border: 0.6mm solid var(--coral);
+}
+
+.stn b i {
+  font-style: normal;
+  color: var(--coral);
+  letter-spacing: 0.04em;
+  margin-right: 1.6mm;
+}
+
+.stn span {
+  display: block;
+  font-size: 0.7rem;
+  line-height: 1.1;
+  color: var(--ink-2);
+  margin-top: 0.6mm;
+}
+
+/* =========================================================================
+ * PANEL 10 — CLOSE. QR codes, provenance, references.
+ * ========================================================================= */
+.close-grid {
+  display: grid;
+  grid-template-columns: 95mm 150mm 1fr;
+  gap: 5mm 10mm;
+  height: 100%;
+  align-items: start;
+}
+
+/* Fixed 20mm squares, not 1fr with an aspect ratio: a grid item's automatic
+   minimum size is its content, so a label that will not fit pushes the box
+   taller than the 26mm the panel has. */
+.qr-row {
+  display: grid;
+  grid-template-columns: repeat(4, 20mm);
+  gap: 5mm;
+}
+
+.qr {
+  width: 20mm;
+  height: 20mm;
+  overflow: hidden;
+  border-radius: 2mm;
+  border: 0.4mm dashed rgba(232, 237, 245, 0.3);
+  display: grid;
+  place-items: center;
+  text-align: center;
+  font-family: "Archivo", sans-serif;
+  font-weight: 700;
+  font-stretch: 108%;
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  line-height: 1.1;
+}
+
+.qr img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.close-grid .src {
+  font-size: 0.66rem;
+  line-height: 1.22;
+  color: var(--ink-3);
+}
+
+.close-grid .src b {
+  color: var(--ink-2);
+  font-weight: 600;
+}
+
+.refs {
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8mm 6mm;
+  font-size: 0.64rem;
+  line-height: 1.2;
+  color: var(--ink-3);
+}
+
+.refs b {
+  color: var(--ink-2);
+  font-weight: 600;
+}
+
+.refs .provisional {
+  color: var(--mango);
+  opacity: 0.85;
+}
+
+/* =========================================================================
+ * FOOTER — the official NUS band, placed WHOLE as the issued bitmap.
+ *
+ * Not rebuilt from a rectangle plus a logo: the school's artwork goes down
+ * exactly as supplied, at its own aspect ratio, with no recolouring and no
+ * retypesetting (poster.md C7.3, method 1). --band-h is derived from the
+ * bitmap, so the two can never drift apart.
+ * ========================================================================= */
+.band {
+  position: absolute;
+  z-index: 4;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: var(--band-h);
+  display: block;
+  object-fit: fill; /* exact aspect already; guards against sub-pixel gaps */
+}
+
+/* =========================================================================
+ * PRINT SAFETY
+ * ========================================================================= */
+@media print {
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+/* If the renderer has no backdrop-filter (Chrome's print pipeline sometimes
+   drops it), the panels fall back to an opaque fill rather than going
+   transparent and losing all text contrast. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .panel {
+    background: rgba(11, 19, 33, 0.93);
+  }
+  .panel--hero {
+    background: rgba(9, 16, 29, 0.95);
+  }
+}
