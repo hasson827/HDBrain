@@ -1259,44 +1259,49 @@ em {
  * ========================================================================= */
 .close-grid {
   display: grid;
-  grid-template-columns: 95mm 150mm 1fr;
+  grid-template-columns: 76mm 194mm 1fr;
   gap: 5mm 10mm;
   height: 100%;
   align-items: start;
 }
 
-/* Fixed 20mm squares, not 1fr with an aspect ratio: a grid item's automatic
-   minimum size is its content, so a label that will not fit pushes the box
-   taller than the 26mm the panel has. */
+/* Fixed squares, not 1fr with an aspect ratio: a grid item's automatic minimum
+   size is its content, so a caption that will not fit pushes the box taller
+   than the panel has room for. 22mm is what the 27.3mm content height allows
+   once the caption is under it; by the usual "scan distance is about ten times
+   the code's width" rule that reads from ~22cm, which is how close someone
+   stands to read a panel of this poster anyway. */
 .qr-row {
   display: grid;
-  grid-template-columns: repeat(4, 20mm);
+  grid-template-columns: repeat(3, 22mm);
   gap: 5mm;
 }
 
-.qr {
-  width: 20mm;
-  height: 20mm;
-  overflow: hidden;
-  border-radius: 2mm;
-  border: 0.4mm dashed rgba(232, 237, 245, 0.3);
-  display: grid;
-  place-items: center;
-  text-align: center;
+/* Dark modules on a light tile. Drawing them the other way round (ink-1 on the
+   glass) looked better on the panel and did not scan: at 300dpi every one of
+   the three decoded only after the image was inverted. The rounded corner is
+   the one concession to the panel's shape; the quiet zone stays light, because
+   that is what the scanner needs. */
+.qr img {
+  display: block;
+  width: 22mm;
+  height: 22mm;
+  border-radius: 1.4mm;
+}
+
+.qr b {
+  display: block;
+  margin-top: 0.6mm;
   font-family: "Archivo", sans-serif;
   font-weight: 700;
   font-stretch: 108%;
-  font-size: 0.6rem;
-  letter-spacing: 0.06em;
+  font-size: 0.55rem;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--ink-3);
-  line-height: 1.1;
-}
-
-.qr img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+  text-align: center;
+  color: var(--ink-2);
+  line-height: 1.05;
+  white-space: nowrap;
 }
 
 .close-grid .src {
