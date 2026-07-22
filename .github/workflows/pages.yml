@@ -1,0 +1,52 @@
+# Publish the HDBrain site to GitHub Pages.
+#
+# The site lives in web/, and Pages' "deploy from a branch" mode can only serve
+# the repository root or /docs — so it is published from a workflow instead,
+# which can point at any directory. Nothing is built: web/ is vanilla ES modules
+# with no bundler, so the job just uploads the folder as-is.
+#
+# ONE-TIME SETUP, admin only: Settings -> Pages -> Source = "GitHub Actions".
+# Until that is set, this workflow fails at the deploy step with a 404.
+#
+# Result: https://hasson827.github.io/HDBrain/
+# Every asset path in the site is relative ("./static/data", "./static/img"),
+# so the /HDBrain/ sub-path needs no code change.
+
+name: Deploy site to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch: # lets the admin trigger the first deploy by hand
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never let two deploys race; queue instead of cancelling so a finished build
+# is not thrown away mid-publish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

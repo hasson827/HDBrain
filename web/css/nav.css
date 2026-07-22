@@ -1,0 +1,193 @@
+/*
+ * Top navigation: horizontal MRT line (README_XCH §7.11.1 "functional layer").
+ * Static/linear only in S2 — the train marker's position is bound to scroll
+ * with a plain transform, no easing or scrub physics (that is S3).
+ */
+
+#top-nav {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: var(--nav-height);
+  z-index: var(--z-nav);
+  border-bottom: var(--border-hairline);
+  border-radius: 0;
+}
+
+.nav-inner {
+  height: 100%;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.nav-brand {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-md);
+  color: var(--ink-1);
+  letter-spacing: -0.02em;
+  flex: none;
+  text-decoration: none;
+}
+
+.nav-brand .dot {
+  color: var(--coral);
+}
+
+.nav-track {
+  position: relative;
+  flex: 1;
+  height: 100%;
+  display: none;
+  /* Nudge the whole rail group (line + train + dots) down a touch — the train
+     rides above the line, so at a true 50% the group's visual mass sits high;
+     this re-centres it against the brand text and action buttons. */
+  transform: translateY(17px);
+}
+
+/* Clips ONLY the train's horizontal overflow — deliberately a separate box
+   from .nav-track (real bug found 2026-07-17: overflow:hidden directly on
+   .nav-track, which is also the containing block for each dot's tooltip
+   bubble, silently clipped every tooltip too, since the bubble renders
+   below the track's own height. The tooltip was never actually broken in
+   markup/CSS terms — it was rendering, then getting cut off by this
+   ancestor's clipping before a single pixel of it could show). */
+.nav-train-clip {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.nav-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  background: rgba(232, 237, 245, 0.16);
+  transform: translateY(-50%);
+}
+
+/* The real SMRT train illustration (XCH-supplied, background removed 2026-07-17),
+   not an abstract dot. Positioned by its RIGHT edge (nav.js `updateTrainByScroll()`),
+   which tracks scroll continuously — the rest of the train trails behind to
+   the left and gets clipped by `.nav-train-clip`'s `overflow: hidden` when
+   there isn't room to show the whole consist yet.
+   z-index puts it above the line/dots (XCH: train should ride "on top"), and
+   `pointer-events: none` makes sure that layering never blocks clicking or
+   hovering a dot the train happens to be passing over (real regression found
+   right after adding the z-index: covered dots stopped being clickable and
+   their tooltips stopped showing, since the train was silently eating the
+   pointer events meant for the dot underneath).
+   Anchored by its BOTTOM edge with a fixed gap above the rail line (rather
+   than vertically centered) so the wheels/undercarriage sit just above the
+   line, not on top of it — dots stay fully visible instead of being partly
+   covered by the train's lower edge (XCH: "隔开一点，要让我能看到完整的点"). */
+.nav-train {
+  position: absolute;
+  bottom: calc(50% + 6px);
+  right: 100%;
+  height: 30px;
+  width: auto;
+  will-change: right;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.nav-dot {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--pos);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: var(--ink-2);
+}
+
+.nav-dot-mark {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: currentColor;
+  flex: none;
+  transition: width var(--duration-fast) var(--ease-out-expo), height var(--duration-fast) var(--ease-out-expo);
+}
+
+/* Bubble tooltip with the full station name — replaces the old inline-expand
+   short label (XCH: "不要只显示ST几，而是要把全名浮动的显示在下面，类似于一个
+   冒泡的框框"). Below the dot, with a small pointer triangle. */
+.nav-dot-tooltip {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: var(--border-hairline);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--ink-1);
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity var(--duration-fast) var(--ease-out-expo), transform var(--duration-fast) var(--ease-out-expo);
+  z-index: var(--z-tooltip);
+}
+
+.nav-dot-tooltip::before {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-bottom-color: var(--bg-2);
+}
+
+.nav-dot:hover .nav-dot-tooltip,
+.nav-dot:focus-visible .nav-dot-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+.nav-dot[aria-current="true"] {
+  color: var(--coral);
+}
+
+.nav-dot[aria-current="true"] .nav-dot-mark {
+  width: 10px;
+  height: 10px;
+  box-shadow: 0 0 0 4px rgba(255, 107, 107, 0.2);
+}
+
+.nav-actions {
+  display: none;
+  flex: none;
+  gap: var(--space-2);
+}
+
+@media (min-width: 900px) {
+  .nav-track {
+    display: block;
+  }
+
+  .nav-actions {
+    display: flex;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-train {
+    transition: none !important;
+  }
+}

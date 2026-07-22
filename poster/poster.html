@@ -1,0 +1,811 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>HDBrain · SWS3022 Group 1 · A1 Poster</title>
+    <link rel="stylesheet" href="poster.css" />
+  </head>
+  <body>
+    <!-- ==================================================================
+         ICON SPRITE. Flat line art in the same system the product already
+         uses (web/js/flat-icons.js): a 64x64 box, no fill, currentColor
+         stroke at 2 units, round caps and joins. Defined once, referenced by
+         <use>, so the PDF carries one vector definition per glyph.
+         ================================================================== -->
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <defs>
+        <symbol id="i-db" viewBox="0 0 64 64">
+          <ellipse cx="32" cy="17" rx="18" ry="7"/>
+          <path d="M14 17v30c0 3.9 8.1 7 18 7s18-3.1 18-7V17"/>
+          <path d="M14 32c0 3.9 8.1 7 18 7s18-3.1 18-7"/>
+        </symbol>
+
+        <symbol id="i-index" viewBox="0 0 64 64">
+          <path d="M12 12v40h40"/>
+          <path d="M18 44l10-11 8 6 14-19"/>
+          <circle cx="50" cy="20" r="3"/>
+        </symbol>
+
+        <symbol id="i-pin" viewBox="0 0 64 64">
+          <path d="M32 54s15-14 15-25a15 15 0 1 0-30 0c0 11 15 25 15 25z"/>
+          <circle cx="32" cy="28" r="6"/>
+        </symbol>
+
+        <symbol id="i-globe" viewBox="0 0 64 64">
+          <circle cx="32" cy="32" r="20"/>
+          <path d="M32 12c-6 6-9 13-9 20s3 14 9 20c6-6 9-13 9-20s-3-14-9-20z"/>
+          <path d="M12 32h40"/>
+        </symbol>
+
+        <symbol id="i-cluster" viewBox="0 0 64 64">
+          <circle cx="32" cy="32" r="6"/>
+          <circle cx="32" cy="12" r="4.5"/><circle cx="49" cy="22" r="4.5"/>
+          <circle cx="49" cy="42" r="4.5"/><circle cx="32" cy="52" r="4.5"/>
+          <circle cx="15" cy="42" r="4.5"/><circle cx="15" cy="22" r="4.5"/>
+        </symbol>
+
+        <symbol id="i-sliders" viewBox="0 0 64 64">
+          <path d="M14 20h36M14 32h36M14 44h36"/>
+          <circle cx="26" cy="20" r="4"/><circle cx="40" cy="32" r="4"/>
+          <circle cx="22" cy="44" r="4"/>
+        </symbol>
+
+        <symbol id="i-flat" viewBox="0 0 64 64">
+          <path d="M10 52h44"/>
+          <path d="M17 44V32M29 44V32M41 44V32M50 44V32"/>
+        </symbol>
+
+        <symbol id="i-line" viewBox="0 0 64 64">
+          <path d="M12 50L52 16"/>
+          <circle cx="21" cy="44" r="2.8"/><circle cx="31" cy="39" r="2.8"/>
+          <circle cx="41" cy="27" r="2.8"/>
+        </symbol>
+
+        <symbol id="i-shield" viewBox="0 0 64 64">
+          <path d="M32 11l18 7v15c0 12-8 18-18 21-10-3-18-9-18-21V18l18-7z"/>
+        </symbol>
+
+        <symbol id="i-target" viewBox="0 0 64 64">
+          <circle cx="32" cy="32" r="19"/>
+          <circle cx="32" cy="32" r="10"/>
+          <circle cx="32" cy="32" r="2.5"/>
+        </symbol>
+
+        <symbol id="i-forest" viewBox="0 0 64 64">
+          <path d="M20 38l9-19 9 19z"/><path d="M29 46v6"/>
+          <path d="M8 46l7-14 7 14z"/><path d="M15 52v2"/>
+          <path d="M42 46l7-14 7 14z"/><path d="M49 52v2"/>
+        </symbol>
+
+        <symbol id="i-rocket" viewBox="0 0 64 64">
+          <path d="M32 8c8 7 12 16 12 25l-5 8H25l-5-8c0-9 4-18 12-25z"/>
+          <circle cx="32" cy="26" r="4.5"/>
+          <path d="M25 43l-8 9 10-3M39 43l8 9-10-3"/>
+        </symbol>
+
+        <symbol id="i-curve" viewBox="0 0 64 64">
+          <path d="M10 46c9 0 8-28 22-28s13 28 22 28"/>
+          <path d="M10 50h44"/>
+          <path d="M22 46V33M32 46V21M42 46V33"/>
+        </symbol>
+
+        <symbol id="i-tree" viewBox="0 0 64 64">
+          <circle cx="32" cy="14" r="4.5"/>
+          <circle cx="19" cy="33" r="4.5"/><circle cx="45" cy="33" r="4.5"/>
+          <circle cx="12" cy="52" r="4.5"/><circle cx="26" cy="52" r="4.5"/>
+          <path d="M29 18l-7 11M35 18l7 11M17 37l-3 11M21 37l3 11"/>
+        </symbol>
+
+        <symbol id="i-grid" viewBox="0 0 64 64">
+          <rect x="13" y="13" width="38" height="38" rx="2"/>
+          <path d="M26 13v38M38 13v38M13 26h38M13 38h38"/>
+          <rect x="38" y="26" width="13" height="12" fill="currentColor" stroke="none"/>
+        </symbol>
+
+        <symbol id="i-code" viewBox="0 0 64 64">
+          <path d="M22 18L9 32l13 14M42 18l13 14-13 14"/>
+          <path d="M37 14l-10 36"/>
+        </symbol>
+
+        <symbol id="i-calc" viewBox="0 0 64 64">
+          <rect x="15" y="9" width="34" height="46" rx="4"/>
+          <rect x="22" y="16" width="20" height="9" rx="1.5"/>
+          <circle cx="24" cy="34" r="2.4"/><circle cx="32" cy="34" r="2.4"/>
+          <circle cx="40" cy="34" r="2.4"/>
+          <circle cx="24" cy="45" r="2.4"/><circle cx="32" cy="45" r="2.4"/>
+          <circle cx="40" cy="45" r="2.4"/>
+        </symbol>
+
+        <symbol id="i-window" viewBox="0 0 64 64">
+          <rect x="8" y="13" width="48" height="38" rx="4"/>
+          <path d="M8 24h48"/>
+          <circle cx="16" cy="18.5" r="1.8"/><circle cx="23" cy="18.5" r="1.8"/>
+          <circle cx="30" cy="18.5" r="1.8"/>
+          <path d="M23 44v-8l9-7 9 7v8"/>
+        </symbol>
+      </defs>
+    </svg>
+
+    <!--
+      PANEL GEOMETRY (millimetres, origin = top-left of the 594 x 841 canvas).
+      This is the v1 grid from poster_v1.md §1.1 / §1.2. Two strict columns,
+      no stagger: L = x20 w270, centre gutter 14mm, R = x304 w270, full width
+      = x20 w554, and an 8mm gap on every single row boundary.
+
+        R0  masthead      17 .. 63     full   (no panel, sits on the photo)
+        R1  PROBLEM       71 .. 155    L      INNOVATION      71 .. 155   R
+        R2  ARCHITECTURE 163 .. 281    full
+        R3  ARENA        289 .. 387    L      EXPLAINABILITY 289 .. 387   R
+        R4  HONEST       395 .. 451    full
+        R5  AFFORDABILITY 459 .. 575   full
+        R6  PRODUCT      583 .. 737    full
+        R7  CLOSE        745 .. 781    full
+            NUS band   787.1 .. 841    full   (official bitmap, 53.90mm)
+
+      Every gap is exactly 8mm and the last panel clears the band by 6.1mm.
+
+      The spine SVG below is drawn in the same coordinate space and routes
+      entirely through those gutters, never under a panel:
+
+        x= 13  left margin      y  68 ..150   past PROBLEM
+        y=159  R1/R2 gap        x  22 ..575   over ARCHITECTURE
+        x=584  right margin     y 168 ..276   down ARCHITECTURE's right side
+        y=285  R2/R3 gap        x 575 ..306   back to the centre
+        x=297  centre gutter    y 294 ..382   between ARENA and EXPLAIN
+        y=391  R3/R4 gap        x 288 .. 22   back out to the left
+        x= 13  left margin      y 400 ..570   past HONEST and AFFORDABILITY
+        y=579  R5/R6 gap        x  22 ..575   over PRODUCT
+        x=584  right margin     y 588 ..782   down to the band
+
+      MOVE A PANEL AND THE ROUTE IS WRONG. The trains are pinned to the same
+      numbers, so they move with it.
+
+      Panels are overflow:hidden, so clipped content vanishes without an
+      error and without showing up in a screenshot. After any edit, run the
+      probe in probe.txt and require over=0 on all nine panels.
+    -->
+    <div class="poster">
+      <img class="bg-photo" src="assets/poster_background.jpg" alt="" />
+      <div class="bg-scrim"></div>
+
+      <!-- ==================================================================
+           THE SPINE. Routed behind the panels (z-index 2 vs 3) so it surfaces
+           only in the gutters, the way a rail line disappears under
+           buildings. The product's navigation is an MRT line and mrt_dist is
+           a real model feature, so the metaphor and the model agree.
+           ================================================================== -->
+      <svg
+        class="spine"
+        viewBox="0 0 594 841"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+      >
+        <path class="route-glow" d="M 13 68 L 13 150 Q 13 159 22 159 L 575 159 Q 584 159 584 168
+             L 584 276 Q 584 285 575 285 L 306 285 Q 297 285 297 294
+             L 297 382 Q 297 391 288 391 L 22 391 Q 13 391 13 400
+             L 13 570 Q 13 579 22 579 L 575 579 Q 584 579 584 588
+             L 584 782" />
+        <path class="route" d="M 13 68 L 13 150 Q 13 159 22 159 L 575 159 Q 584 159 584 168
+             L 584 276 Q 584 285 575 285 L 306 285 Q 297 285 297 294
+             L 297 382 Q 297 391 288 391 L 22 391 Q 13 391 13 400
+             L 13 570 Q 13 579 22 579 L 575 579 Q 584 579 584 588
+             L 584 782" />
+        <circle class="terminus" cx="13" cy="68" r="2.6" />
+        <circle class="terminus" cx="584" cy="782" r="2.6" />
+      </svg>
+
+      <!-- Six four-car sets, one per stretch of route, nose pointing the way
+           the line runs there. Each is 42 x 4.31mm and sits wholly inside a
+           gutter or a page margin, so none of them costs a panel a single
+           millimetre. The y values are gap centres and the x values are
+           channel centres; both come straight from the geometry table above. -->
+      <img class="train train--down" src="assets/mrt-train.png" alt=""
+           style="--tx: 13mm; --ty: 109mm" />   <!-- departing, left margin -->
+      <img class="train train--east" src="assets/mrt-train.png" alt=""
+           style="--tx: 298mm; --ty: 159mm" />  <!-- gap above ARCHITECTURE -->
+      <img class="train train--down" src="assets/mrt-train.png" alt=""
+           style="--tx: 297mm; --ty: 338mm" />  <!-- ARENA / EXPLAIN gutter -->
+      <img class="train train--down" src="assets/mrt-train.png" alt=""
+           style="--tx: 13mm; --ty: 470mm" />   <!-- left of HONEST / AFFORD -->
+      <img class="train train--east" src="assets/mrt-train.png" alt=""
+           style="--tx: 298mm; --ty: 579mm" />  <!-- gap above PRODUCT -->
+      <img class="train train--down" src="assets/mrt-train.png" alt=""
+           style="--tx: 584mm; --ty: 660mm" />  <!-- right of PRODUCT -->
+
+      <!-- ============================== MASTHEAD ======================== -->
+      <header class="masthead">
+        <div class="mast-top">
+          <h1 class="wordmark">HD<span class="brain">Brain</span></h1>
+          <div class="byline">
+            <span class="course">SWS3022 · Group 1</span>
+            Lin Hali (ZJU) · Xu Chuhao (UIUC)<br />
+            Zhang Zherui (UIUC) · Zhao Hongshuo (ZJU)<br />
+            AI/ML in Financial Services · NUS SoC · 2026
+          </div>
+        </div>
+        <p class="subtitle">
+          Explainable AI for Singapore HDB resale valuation: from
+          <strong>981,450</strong> transactions to a deployable web product.
+        </p>
+      </header>
+
+      <!-- ============================== R1-L · PROBLEM =================== -->
+      <section
+        class="panel panel--flow"
+        style="--x: 20mm; --y: 71mm; --w: 270mm; --h: 84mm; --pad-y: 5.5mm"
+      >
+        <h2 class="h-section">The <span class="mark">Problem</span></h2>
+        <p>
+          Buying an HDB resale flat is the largest financial decision most
+          Singaporeans make. Every tool on the market prices a flat you have
+          already picked. None of them starts from what you can actually
+          afford.
+        </p>
+
+        <div class="stat">
+          <div class="v">R<sup>2</sup>&nbsp;<span data-fig="baseline_r2">−0.296</span></div>
+          <div class="u">
+            An area-unit-price baseline, the agent's own rule of thumb, scored
+            on <span data-fig="n_test">66,097</span> unseen 2024-2026 sales.
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================== R1-R · INNOVATION ================ -->
+      <section
+        class="panel panel--hero panel--flow"
+        style="--x: 304mm; --y: 71mm; --w: 270mm; --h: 84mm; --pad-y: 5.5mm"
+      >
+        <div class="panel-head">
+          <h2 class="h-section"><span class="mark">Innovation</span></h2>
+          <p class="h-sub">
+            Every other tool goes flat <svg class="arw" viewBox="0 0 26 12" aria-hidden="true"><path d="M1 6h20M17 1.5 22.5 6 17 10.5"/></svg> price. We inverted it:
+            <strong>finances <svg class="arw" viewBox="0 0 26 12" aria-hidden="true"><path d="M1 6h20M17 1.5 22.5 6 17 10.5"/></svg> flats</strong>.
+          </p>
+        </div>
+
+        <div class="diffs">
+          <div class="diff">
+            <div class="n">1</div>
+            <div>
+              <h4>Reverse valuation loop</h4>
+              <p>
+                <span data-fig="n_profiles">1,534</span> profiles priced, then
+                intersected with MAS rules. Output: a map.
+              </p>
+            </div>
+          </div>
+          <div class="diff">
+            <div class="n">2</div>
+            <div>
+              <h4>Dual-constraint affordability</h4>
+              <p>
+                Monthly serviceability <em>and</em> upfront cash, by bisection.
+              </p>
+            </div>
+          </div>
+          <div class="diff">
+            <div class="n">3</div>
+            <div>
+              <h4>An LLM that never calculates</h4>
+              <p>
+                Every S$ figure checked against a deterministic fact sheet.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================== R2 · ARCHITECTURE ================ -->
+      <section
+        class="panel panel--flow"
+        style="--x: 20mm; --y: 163mm; --w: 554mm; --h: 118mm; --pad-y: 5mm"
+      >
+        <div class="arch-head">
+          <h2 class="h-section">AI <span class="mark">Architecture</span></h2>
+          <div class="tech-strip">
+            <b>XGBoost</b><b>Random Forest</b><b>Quantile Regression</b
+            ><b>TreeSHAP</b><b>Rule-based Engine</b><b>LLM</b>
+          </div>
+        </div>
+
+        <!-- Redrawn from assets/charts/hero_architecture.png. Every string
+             here is transcribed from that figure; see poster.css for why it is
+             typeset rather than placed. -->
+        <div class="pipe">
+          <section class="stg">
+            <h3>Data</h3>
+            <div class="cards">
+              <div class="cd">
+                <svg class="ico" aria-hidden="true"><use href="#i-db"/></svg>
+                <div>
+                  <b>HDB Resale Transactions</b>
+                  <span><span data-fig="n_transactions">981,450</span> records ·
+                    <em class="nb"><span data-fig="date_from">1990-01</span> to
+                    <span data-fig="date_to">2026-07</span></em></span>
+                </div>
+              </div>
+              <div class="cd">
+                <svg class="ico" aria-hidden="true"><use href="#i-index"/></svg>
+                <div>
+                  <b>CPI Index</b>
+                  <span>1961&ndash;2026, monthly</span>
+                </div>
+              </div>
+              <div class="cd">
+                <svg class="ico" aria-hidden="true"><use href="#i-pin"/></svg>
+                <div>
+                  <b>Amenities GIS</b>
+                  <span>MRT, school, hawker, park, mall, supermarket</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div class="lnk-cell"><svg class="lnk" viewBox="0 0 11 90" width="11" height="90" aria-hidden="true"><path class="sh" d="M0 49.4H7.6"/><path class="hd" d="M6.6 46.3 11 49.4 6.6 52.5z"/></svg></div>
+
+          <section class="stg">
+            <h3>Feature Factory</h3>
+            <div class="cards">
+              <div class="cd cd--plain">
+                <svg class="ico" aria-hidden="true"><use href="#i-globe"/></svg>
+                <div><span>Haversine coarse filter <svg class="arw" viewBox="0 0 26 12" aria-hidden="true"><path d="M1 6h20M17 1.5 22.5 6 17 10.5"/></svg> geodesic exact</span></div>
+              </div>
+              <div class="cd cd--plain">
+                <svg class="ico" aria-hidden="true"><use href="#i-cluster"/></svg>
+                <div><span>6 amenities × {nearest distance, count within 2 km}</span></div>
+              </div>
+              <div class="cd cd--plain">
+                <svg class="ico" aria-hidden="true"><use href="#i-sliders"/></svg>
+                <div><span>CPI adjustment <svg class="arw" viewBox="0 0 26 12" aria-hidden="true"><path d="M1 6h20M17 1.5 22.5 6 17 10.5"/></svg>
+                  <span data-fig="n_features">29</span>-dim numeric matrix</span></div>
+              </div>
+            </div>
+          </section>
+
+          <div class="lnk-cell"><svg class="lnk" viewBox="0 0 11 90" width="11" height="90" aria-hidden="true"><path class="sh" d="M0 49.4H7.6"/><path class="hd" d="M6.6 46.3 11 49.4 6.6 52.5z"/></svg></div>
+
+          <section class="stg">
+            <h3>Model Arena</h3>
+            <div class="cards">
+              <div class="mdl"><svg class="ico" aria-hidden="true"><use href="#i-flat"/></svg>Baseline</div>
+              <div class="mdl"><svg class="ico" aria-hidden="true"><use href="#i-line"/></svg>Linear Regression</div>
+              <div class="mdl"><svg class="ico" aria-hidden="true"><use href="#i-shield"/></svg>Ridge</div>
+              <div class="mdl"><svg class="ico" aria-hidden="true"><use href="#i-target"/></svg>Lasso</div>
+              <div class="mdl"><svg class="ico" aria-hidden="true"><use href="#i-forest"/></svg>Random Forest</div>
+              <div class="mdl is-win"><svg class="ico" aria-hidden="true"><use href="#i-rocket"/></svg>XGBoost <i>champion</i></div>
+            </div>
+          </section>
+
+          <div class="lnk-cell"><svg class="lnk lnk--champ" viewBox="0 0 11 90" width="11" height="90" aria-hidden="true"><path class="sh" d="M0 82.3H3.4Q5 82.3 5 80.7V51.0Q5 49.4 6.6 49.4H7.6"/><path class="hd" d="M6.6 46.3 11 49.4 6.6 52.5z"/></svg></div>
+
+          <section class="stg">
+            <h3>Explain &amp; Bound</h3>
+            <div class="cards">
+              <div class="cd">
+                <svg class="ico" aria-hidden="true"><use href="#i-curve"/></svg>
+                <div>
+                  <b>Quantile Regression</b>
+                  <span>q05 / q50 / q95 <svg class="arw" viewBox="0 0 26 12" aria-hidden="true"><path d="M1 6h20M17 1.5 22.5 6 17 10.5"/></svg> <em class="nb">90% interval</em></span>
+                </div>
+              </div>
+              <div class="cd">
+                <svg class="ico" aria-hidden="true"><use href="#i-tree"/></svg>
+                <div>
+                  <b>TreeSHAP</b>
+                  <span>Global importance + local waterfall</span>
+                </div>
+              </div>
+              <div class="cd">
+                <svg class="ico" aria-hidden="true"><use href="#i-grid"/></svg>
+                <div>
+                  <b>Ablation Study</b>
+                  <span>12 feature groups</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div class="lnk-cell"><svg class="lnk" viewBox="0 0 11 90" width="11" height="90" aria-hidden="true"><path class="sh" d="M0 49.4H7.6"/><path class="hd" d="M6.6 46.3 11 49.4 6.6 52.5z"/></svg></div>
+
+          <section class="stg">
+            <h3>Rules &amp; Delivery</h3>
+            <div class="cards">
+              <div class="cd">
+                <svg class="ico" aria-hidden="true"><use href="#i-code"/></svg>
+                <div>
+                  <b>MAS Rules Engine</b>
+                  <span>MSR 30% · TDSR 55% · <em class="nb">LTV 75%</em> · progressive BSD</span>
+                </div>
+              </div>
+              <div class="cd">
+                <svg class="ico" aria-hidden="true"><use href="#i-calc"/></svg>
+                <div>
+                  <b>Affordability Solver</b>
+                  <span>Annuity inversion + bisection</span>
+                </div>
+              </div>
+              <div class="cd cd--out">
+                <svg class="ico" aria-hidden="true"><use href="#i-window"/></svg>
+                <div>
+                  <b>Static site</b>
+                  <span>7 precomputed JSON, no server, guarded LLM</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <!-- ============================== R3-L · ARENA ===================== -->
+      <section
+        class="panel panel--flow"
+        style="--x: 20mm; --y: 289mm; --w: 270mm; --h: 98mm; --pad-y: 5.5mm"
+      >
+        <h2 class="h-section">Model <span class="mark">Arena</span></h2>
+        <p class="h-sub">
+          Six models. Train to 2023
+          (<span data-fig="n_train">915,353</span> rows), test from 2024
+          (<span data-fig="n_test">66,097</span> unseen sales). Bars are test
+          RMSE; labels add R² and median APE.
+        </p>
+
+        <div class="bars" id="arena"></div>
+
+        <div class="abl">
+          <b>Tiebreak</b>
+          <span>
+            Random Forest ties at R<sup>2</sup>
+            <span data-fig="rf_r2">0.876</span> in
+            <span data-fig="rf_size">15 GB</span>. XGBoost:
+            <span data-fig="xgb_size">7.8 MB</span>.
+          </span>
+        </div>
+      </section>
+
+      <!-- ============================== R3-R · EXPLAINABILITY ============ -->
+      <section
+        class="panel panel--flow"
+        style="--x: 304mm; --y: 289mm; --w: 270mm; --h: 98mm; --pad-y: 5.5mm"
+      >
+        <h2 class="h-section"><span class="mark">Explainability</span></h2>
+        <p class="h-sub">
+          TreeSHAP prices every input. Mean |SHAP| is what a feature moves a
+          valuation by, in Singapore dollars.
+        </p>
+
+        <div class="bars bars--shap" id="shap"></div>
+
+        <div class="abl">
+          <b>Ablation</b>
+          <span id="abl-line">
+            Drop <em>year</em>: R<sup>2</sup> 0.890 <svg class="arw" viewBox="0 0 26 12" aria-hidden="true"><path d="M1 6h20M17 1.5 22.5 6 17 10.5"/></svg>
+            <span data-fig="ablation_year_r2_after">0.775</span>.
+          </span>
+        </div>
+      </section>
+
+      <!-- ============================== R4 · HONEST FINDING ============== -->
+      <section
+        class="panel panel--caution"
+        style="--x: 20mm; --y: 395mm; --w: 554mm; --h: 56mm; --pad-y: 5mm"
+      >
+        <div class="honest">
+          <div>
+            <h2 class="h-section">
+              The <span class="mark">honest</span> finding
+            </h2>
+            <p class="h-sub">
+              A temporal split shows what a random split hides. Out of
+              distribution our 90% intervals collapse:
+              <strong><span data-fig="above_q95">52.48</span>%</strong> of real
+              2024-2026 sales printed above our 95th percentile, only
+              <span data-fig="below_q05">0.81</span>% below our 5th. We
+              under-predict in a rising market, and we say so.
+            </p>
+          </div>
+
+          <div>
+            <div class="cover-rows" id="coverage"></div>
+            <p class="cap" style="margin-top: 2.5mm">
+              Median bias <span data-fig="median_bias">−7.2%</span> on 2024-2026 sales.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================== R5 · AFFORDABILITY =============== -->
+      <section
+        class="panel panel--flow"
+        style="--x: 20mm; --y: 459mm; --w: 554mm; --h: 116mm; --pad-y: 5.5mm"
+      >
+        <div class="panel-head panel-head--split">
+          <h2 class="h-section">
+            Affordability <span class="mark">Engine</span>
+          </h2>
+          <p class="h-sub">
+            Prediction becomes decision. MAS rules turn a price forecast into
+            what a household can actually borrow, solved exactly. Ported to
+            JavaScript: 15/15 parity tests green.
+          </p>
+        </div>
+
+        <div class="aff-grid">
+          <!-- The cascade: four states, three transformations. -->
+          <div class="cascade">
+            <div class="node">Monthly household income</div>
+            <div class="step"><span>MSR 30% / TDSR 55%, whichever binds</span></div>
+            <div class="node">Repayment ceiling</div>
+            <div class="step"><span>Annuity inversion, closed form</span></div>
+            <div class="node">Maximum loan</div>
+            <div class="step"><span>LTV 75%, progressive BSD, bisection to 80 iterations</span></div>
+            <div class="node is-out">Highest affordable price</div>
+          </div>
+
+          <!-- The 1,534 profiles it decides on, and the income ladder. -->
+          <div class="col">
+            <p class="cap" style="margin-bottom: 2mm">
+              One cell = one (town × flat type × storey) profile.
+            </p>
+            <div class="lattice" id="lattice"></div>
+            <p class="cap" id="lattice-cap" style="margin-top: 2mm"></p>
+            <div class="ladder" id="ladder"></div>
+          </div>
+
+          <!-- The interface that ships it. -->
+          <div class="col">
+            <div class="shot" style="flex: 1">
+              <img src="assets/screenshots/ST2.png" alt="The City of Lights affordability map with the Central Area detail panel open." />
+            </div>
+            <p class="cap">
+              <strong>ST2 · Budget.</strong> The same engine, live in the
+              product.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================== R6 · PRODUCT ===================== -->
+      <section
+        class="panel panel--flow"
+        style="--x: 20mm; --y: 583mm; --w: 554mm; --h: 154mm"
+      >
+        <div class="panel-head panel-head--split">
+          <h2 class="h-section">The <span class="mark">Product</span></h2>
+          <p class="h-sub">
+            A scrollytelling journey, not a dashboard. Eight stations on the
+            HDBrain Line. Zero build tools, runs offline, deploys free.
+          </p>
+        </div>
+
+        <div class="prod-grid">
+          <div class="col">
+            <div class="shot" style="flex: 1">
+              <img src="assets/screenshots/ST3.png" alt="The valuation station: an estimate of S$642,672 with a 90% interval and a SHAP contribution chart." />
+            </div>
+            <p class="shot-cap">
+              <b>ST3 · Valuation</b><br />
+              Point estimate, 90% interval, and per-flat SHAP in dollars.
+            </p>
+          </div>
+
+          <div class="col">
+            <div class="shot" style="flex: 1">
+              <img src="assets/screenshots/ST7_crop.png" alt="The generated advisory report, opening with the household budget and the towns within reach." />
+            </div>
+            <p class="shot-cap">
+              <b>ST7 · Home</b><br />
+              The LLM writes the report. The engine owns every number.
+            </p>
+          </div>
+
+          <div class="line-map">
+            <div class="stn">
+              <b><i>ST0</i>Departure</b>
+              <span>The little red dot, from orbit to street level</span>
+            </div>
+            <div class="stn">
+              <b><i>ST1</i>Three Questions</b>
+              <span>Afford, worth, timing</span>
+            </div>
+            <div class="stn">
+              <b><i>ST2</i>Budget</b>
+              <span>MAS rules engine and the City of Lights map</span>
+            </div>
+            <div class="stn">
+              <b><i>ST3</i>Valuation</b>
+              <span>Estimate, interval, SHAP waterfall, comparables</span>
+            </div>
+            <div class="stn">
+              <b><i>ST4</i>The 99-Year Clock</b>
+              <span>Scrolling is time. Lease decay, live</span>
+            </div>
+            <div class="stn">
+              <b><i>ST5</i>Market Pulse</b>
+              <span>26-town resale price index</span>
+            </div>
+            <div class="stn">
+              <b><i>ST6</i>The Arena</b>
+              <span>Six models raced on sales they never saw</span>
+            </div>
+            <div class="stn">
+              <b><i>ST7</i>Home</b>
+              <span>Responsible AI, and the report writer</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================== R7 · CLOSE ======================= -->
+      <section
+        class="panel"
+        style="--x: 20mm; --y: 745mm; --w: 554mm; --h: 36mm; --pad-y: 5mm"
+      >
+        <div class="close-grid">
+          <div class="qr-row">
+            <div class="qr">Repo</div>
+            <div class="qr">Site</div>
+            <div class="qr">Demo</div>
+            <div class="qr">Doc</div>
+          </div>
+
+          <p class="src">
+            <b>Data</b> data.gov.sg (HDB resale prices, CPI 1961-2026) ·
+            OneMap · geoBoundaries · MAS · IRAS.<br />
+            <b>Scope</b> Decision support, not a licensed valuation.
+          </p>
+
+          <ul class="refs">
+            <li><b>Rosen</b> (1974). Hedonic prices. <i>JPE</i> 82(1).</li>
+            <li><b>Li, Gao &amp; Tan</b> (2023). HDB lease decay. <i>IRER</i>.</li>
+            <li><b>El Jaouhari et al.</b> (2024). AVM review. <i>IJSPM</i>.</li>
+            <li><b>Trindade Neves et al.</b> (2024). Open data + XAI.</li>
+            <li><b>Tekouabou et al.</b> (2024). ML survey. <i>Springer</i>.</li>
+            <li class="provisional">A selection; full list in the repo.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ============================ NUS BAND ==========================
+           The official Blue footer variant, dropped in WHOLE as the supplied
+           bitmap rather than rebuilt from a rectangle plus a logo. XCH's call:
+           use the band exactly as the school issued it. Its own 4320x394
+           aspect sets the height (54.17mm at A1 width), so nothing here
+           distorts the official artwork and nothing is recoloured.
+           ================================================================== -->
+      <img
+        class="band"
+        src="assets/blue-footer-band.png"
+        alt="NUS SOC Summer Workshop 2026 · NUS Computing"
+      />
+    </div>
+
+    <script src="assets/figures.js"></script>
+    <script>
+      /* Every graphic on this poster is drawn from window.FIGURES, so a
+         backend re-run propagates everywhere. Nothing here is decorative. */
+      (function () {
+        var F = window.FIGURES;
+        var fmt = function (n) {
+          return n.toLocaleString("en-US");
+        };
+
+        /* ---- 1,534-cell affordability lattice, median-income case ------- */
+        var median = F.scenarios.filter(function (s) {
+          return s.median;
+        })[0];
+        var total = 1534,
+          lit = median.count;
+        /* Scatter the lit cells rather than filling from the left. The count
+           is identical either way, but a contiguous block reads as a progress
+           bar and an even interleave lays down visible stripes; this graphic
+           is meant to read like the product's "City of Lights" map. Exactly
+           `lit` cells are lit, shuffled by a seeded LCG so the same figures
+           always draw the same picture. */
+        var grid = new Array(total);
+        for (var i = 0; i < total; i++) grid[i] = i < lit;
+        var seed = 1534;
+        for (var j = total - 1; j > 0; j--) {
+          seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+          var k = seed % (j + 1);
+          var tmp = grid[j];
+          grid[j] = grid[k];
+          grid[k] = tmp;
+        }
+        document.getElementById("lattice").innerHTML = grid
+          .map(function (on) {
+            return on ? '<i class="on"></i>' : "<i></i>";
+          })
+          .join("");
+        document.getElementById("lattice-cap").textContent =
+          fmt(lit) + " of " + fmt(total) +
+          " lit on the median household income of S$" + fmt(median.income) + ".";
+
+        /* ---- Income ladder. The median-income row carries the accent, so
+           its three cells get the modifier the CSS already styles. -------- */
+        document.getElementById("ladder").innerHTML = F.scenarios
+          .map(function (s) {
+            var hi = s.median ? " row-hi" : "";
+            return (
+              '<div class="inc' + hi + '">S$' + fmt(s.income) + "/mo</div>" +
+              '<div class="track' + hi + '"><b style="width:' + s.pct + '%"></b></div>' +
+              '<div class="val' + hi + '">' + fmt(s.count) + " · " + s.pct + "%</div>"
+            );
+          })
+          .join("");
+
+        /* ---- Model arena. Bars are test RMSE, scaled to the worst model, so
+           a shorter bar is a better model and the champion is visibly the
+           shortest. The champion takes the mint tint; the baseline is greyed,
+           because a negative R2 is not a result you want the eye drawn to. */
+        var maxR = Math.max.apply(
+          null,
+          F.models.map(function (m) {
+            return m.rmse;
+          })
+        );
+        document.getElementById("arena").innerHTML = F.models
+          .map(function (m) {
+            var cls = m.champion ? " row-win" : m.r2 < 0 ? " row-bad" : "";
+            return (
+              '<div class="lbl' + cls + '">' + m.name + (m.champion ? " · champion" : "") + "</div>" +
+              '<div class="' + cls.trim() + '"><div class="bar" style="width:' +
+              (m.rmse / maxR) * 100 + '%"></div></div>' +
+              '<div class="fig' + cls + '">S$' + fmt(m.rmse) + " · R² " + m.r2.toFixed(3) +
+              " · " + m.mape.toFixed(2) + "%</div>"
+            );
+          })
+          .join("");
+
+        /* ---- SHAP global importance. Six of the eight measured features:
+           the panel is 98mm tall and a seventh row does not fit above the
+           17pt label floor. The tail is in the report. ------------------- */
+        var shap = F.shap.slice(0, 6);
+        document.getElementById("shap").innerHTML = shap
+          .map(function (s) {
+            return (
+              '<div class="lbl">' + s.feat + "</div>" +
+              '<div><div class="bar" style="width:' +
+              (s.val / shap[0].val) * 100 + '%"></div></div>' +
+              '<div class="fig">S$' + fmt(s.val) + "</div>"
+            );
+          })
+          .join("");
+
+        /* ---- Interval coverage, in and out of distribution. The 90%
+           nominal target is a hairline on the track (see .cover .track::after)
+           so the shortfall is visible rather than asserted. -------------- */
+        document.getElementById("coverage").innerHTML = [
+          { c: "ok", k: "90% interval, in-distribution sales to 2023", v: F.coverage_train },
+          { c: "bad", k: "The same intervals on 2024-2026 sales", v: F.coverage_test },
+        ]
+          .map(function (r) {
+            return (
+              '<div class="cover cover--' + r.c + '">' +
+              '<div class="k">' + r.k + "</div>" +
+              '<div class="v">' + r.v.toFixed(1) + "%</div>" +
+              '<div class="track"><i style="width:' + r.v + '%"></i></div>' +
+              "</div>"
+            );
+          })
+          .join("");
+
+        /* ---- Ablation drop, appended to the sentence already in the DOM so
+           the panel still reads correctly if this script never runs. ----- */
+        var year = F.ablation.filter(function (a) {
+          return a.grp === "year";
+        })[0];
+        if (year) {
+          document.getElementById("abl-line").insertAdjacentHTML(
+            "beforeend",
+            " All other groups: " +
+              (F.ablation.reduce(function (t, a) {
+                return t + a.drop;
+              }, 0) - year.drop).toFixed(3) +
+              "."
+          );
+        }
+      })();
+    </script>
+  </body>
+</html>

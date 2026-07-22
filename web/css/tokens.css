@@ -1,0 +1,145 @@
+/*
+ * Design tokens (README_XCH §8 S2 task 1). Single source of truth for every
+ * color / font / spacing / radius / shadow / z-index value used anywhere in
+ * the site. No component file may hardcode a color, font-size, or spacing
+ * value that has a token here — that is the S2 "tokens first" discipline.
+ *
+ * Palette + rationale: §7.10.1 (dark-first, "light is a reward not wallpaper"),
+ * §7.9.4 (glass component tokens), §7.9.0 (Manrope/Inter type stack).
+ */
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("../vendor/fonts/inter-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("../vendor/fonts/manrope-latin.woff2") format("woff2");
+}
+
+:root {
+  /* ---- Base surfaces (deep navy, three lifted layers; pure black reserved
+     for the ST0 starfield only) ---- */
+  --bg-0: #0a1220;
+  --bg-1: #101a2c;
+  --bg-2: #16233a;
+  --bg-starfield: #000000;
+
+  /* ---- Text ---- */
+  --ink-1: #e8edf5;
+  --ink-2: #93a1b5;
+  --ink-on-accent: #10141c;
+
+  /* ---- Accent discipline: coral is the only accent allowed on structural/
+     CTA elements; mint + mango are reserved for data-viz encoding only
+     (§7.10.1 "each screen gets at most one accent"). Strait blue is the
+     third dataviz hue for the three-tier chart palette. ---- */
+  --coral: #ff6b6b;
+  --coral-dim: #d4514f;
+  --mint: #06d6a0;
+  --mango: #ffd166;
+  --strait-blue: #118ab2;
+
+  /* Ink color for text on a LIGHT surface (parallel to --ink-on-accent).
+     Currently only ST0's blurred "glass disc" backdrop is pale enough to
+     need it; the name doesn't assume it stays that way. */
+  --ink-on-light: #EB5637;
+
+  /* Affordability tiers for the ST2 "City of Lights" map. These were once an
+     all-brightness ramp (color-blind-safe but, per XCH, too subtle for most
+     people to read at a glance), now an intuitive traffic light: plenty=green,
+     cosy=yellow, foothold=red, none=dark/unlit. The tier still appears in each
+     marker's tooltip + aria-label, so the meaning survives for color-blind
+     readers even though hue no longer carries it alone. */
+  --tier-plenty: #35d07a;
+  --tier-cosy: #ffd166;
+  --tier-foothold: #ff6b6b;
+  --tier-off: #24314a;
+
+  /* ---- Glass tokens (§7.9.4, dark variant is the only variant now) ---- */
+  --glass-bg: rgba(16, 28, 46, 0.45);
+  --glass-bg-strong: rgba(16, 28, 46, 0.65);
+  --glass-blur: blur(20px) saturate(160%);
+  --glass-border-top: rgba(255, 255, 255, 0.65);
+  --glass-border-bottom: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 8px 32px rgba(7, 59, 76, 0.12);
+  --glass-radius: 24px;
+  --glass-radius-sm: 12px;
+
+  /* ---- Type ---- */
+  --font-display: "Manrope", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Inter", "Segoe UI", system-ui, sans-serif;
+
+  /* Modular scale, ratio 1.25, base 1rem. */
+  --text-xs: 0.8rem;
+  --text-sm: 0.9rem;
+  --text-base: 1rem;
+  --text-md: 1.25rem;
+  --text-lg: 1.563rem;
+  --text-xl: 1.953rem;
+  --text-2xl: 2.441rem;
+  --text-3xl: 3.052rem;
+  --text-display: clamp(2.5rem, 5vw + 1rem, 5.5rem);
+
+  /* ---- Spacing (4/8 grid) ---- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-24: 6rem;
+
+  /* ---- Radius / border / shadow (shape-consistency lock, §4.4) ----
+     Cards use --radius-md, small controls use --radius-sm, pills use
+     --radius-pill. No other radius value is used anywhere. */
+  --radius-sm: 12px;
+  --radius-md: 20px;
+  --radius-pill: 999px;
+  --border-hairline: 1px solid rgba(232, 237, 245, 0.1);
+  --shadow-card: 0 12px 40px rgba(2, 6, 16, 0.35);
+
+  /* ---- Motion spec (README §8 S3: "先写一张全站动效规范表... 所有动效从表里
+     取值, 禁止拍脑袋数值"). This is that table. Every S3 animation, CSS or JS
+     (js/motion.js mirrors these three durations + the stagger interval for
+     GSAP, which wants seconds), pulls its timing from here — nowhere else.
+       fast   (150ms) — micro feedback: hover glow, docking jolt settle
+       base   (300ms) — state changes: card/tooltip reveal, bar fill, bracket open
+       slow   (600ms) — entrances: count-up, line-drawing, one beat of a chained
+                         sequence (the ST7 finale composes several 600ms beats
+                         in one timeline rather than inventing a longer token)
+       stagger (30ms) — list rhythm: window lighting, SHAP bars, card grids
+     One ease curve for the whole site, per the same discipline. ---- */
+  --duration-fast: 150ms;
+  --duration-base: 300ms;
+  --duration-slow: 600ms;
+  --stagger-interval: 30ms;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ---- z-index scale (§ Layout: never an arbitrary 999) ---- */
+  --z-spotlight: 90;
+  --z-nav: 100;
+  --z-tooltip: 200;
+  --z-modal: 300;
+
+  /* ---- Layout ---- */
+  --content-max: 1200px;
+  --prose-max: 68ch;
+  --nav-height: 76px;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass-bg: rgba(16, 28, 46, 0.92);
+    --glass-bg-strong: rgba(16, 28, 46, 0.97);
+  }
+}

@@ -1,0 +1,425 @@
+/*
+ * Global reset, typography, and component primitives (README_XCH §8 S2 task 1-2).
+ * Every value here comes from tokens.css — no hardcoded color/size in this file.
+ * Anti-template checklist (§7.10.1) is enforced by construction: no gradient
+ * blocks, no emoji-as-icon, no uniform card walls, no centered SaaS opener.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-0);
+  color: var(--ink-1);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.7;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+a {
+  color: var(--coral);
+}
+
+::selection {
+  background: var(--coral);
+  color: var(--ink-on-accent);
+}
+
+/* ---------- Typography ---------- */
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--ink-1);
+  text-wrap: balance;
+  margin: 0 0 var(--space-4);
+}
+
+h1 {
+  font-size: var(--text-display);
+}
+
+h2 {
+  font-size: var(--text-2xl);
+}
+
+h3 {
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+
+p {
+  margin: 0 0 var(--space-4);
+  max-width: var(--prose-max);
+  color: var(--ink-1);
+  text-wrap: pretty;
+}
+
+.eyebrow {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+  margin: 0 0 var(--space-2);
+}
+
+.lede {
+  font-size: var(--text-md);
+  color: var(--ink-2);
+  max-width: var(--prose-max);
+}
+
+.disclosure {
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+  border-top: var(--border-hairline);
+  padding-top: var(--space-3);
+  max-width: var(--prose-max);
+}
+
+/* ---------- Layout primitives ---------- */
+
+section {
+  position: relative;
+  min-height: 100dvh;
+  padding: calc(var(--nav-height) + var(--space-16)) var(--space-8) var(--space-16);
+  overflow-x: clip;
+  /* Opaque by default so the fixed #starfield / #world-bg layers (behind
+     everything) only show through the sections that opt into transparency —
+     ST0's hero and ST1's skyline backdrop. */
+  background: var(--bg-0);
+}
+
+.station-inner {
+  max-width: var(--content-max);
+  margin: 0 auto;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.cluster {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-8);
+}
+
+@media (min-width: 900px) {
+  .grid-2 {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.grid-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-6);
+}
+
+/* ---------- Glass surface ---------- */
+
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: var(--glass-radius);
+  border: 1px solid transparent;
+  border-image: linear-gradient(180deg, var(--glass-border-top), var(--glass-border-bottom)) 1;
+  box-shadow: var(--glass-shadow);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .glass {
+    background: var(--glass-bg-strong);
+  }
+}
+
+.card {
+  background: var(--bg-1);
+  border: var(--border-hairline);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-6);
+}
+
+/* ---------- Buttons ---------- */
+
+button,
+.btn {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: var(--radius-pill);
+  padding: var(--space-3) var(--space-6);
+  transition: transform var(--duration-fast) var(--ease-out-expo);
+}
+
+button:active,
+.btn:active {
+  transform: scale(0.98);
+}
+
+button,
+.btn-primary {
+  background: var(--coral);
+  color: var(--ink-on-accent);
+  border: none;
+}
+
+button:hover,
+.btn-primary:hover {
+  background: #ff8080;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--ink-1);
+  border: 1px solid rgba(232, 237, 245, 0.3);
+}
+
+.btn-ghost:hover {
+  border-color: var(--coral);
+  color: var(--coral);
+}
+
+.btn-sm {
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+}
+
+/* ---------- Forms ---------- */
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+}
+
+input,
+select {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  color: var(--ink-1);
+  background: var(--bg-2);
+  border: 1px solid rgba(232, 237, 245, 0.16);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  accent-color: var(--coral);
+}
+
+input:focus-visible,
+select:focus-visible,
+button:focus-visible,
+a:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--coral);
+  outline-offset: 2px;
+}
+
+input[type="range"] {
+  padding: 0;
+  background: transparent;
+}
+
+/* ---------- Disclosure (collapsed-by-default sections) ---------- */
+
+.disclosure-block summary {
+  cursor: pointer;
+  list-style: none;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-md);
+  color: var(--ink-1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.disclosure-block summary::-webkit-details-marker {
+  display: none;
+}
+
+.disclosure-block summary::after {
+  content: "Show \2193";
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--coral);
+  flex: none;
+}
+
+.disclosure-block[open] summary::after {
+  content: "Hide \2191";
+}
+
+.disclosure-block[open] summary {
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: var(--border-hairline);
+}
+
+/* ---------- Tables ---------- */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+th,
+td {
+  text-align: left;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: var(--border-hairline);
+}
+
+th {
+  color: var(--ink-2);
+  font-weight: 600;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ---------- Split-text reveal (js/split-text.js) ---------- */
+
+.split-char {
+  display: inline-block;
+  will-change: transform, opacity;
+}
+
+/* ScrollFloat groups chars into words (js/scroll-float.js) so wrapping titles/
+   intros break BETWEEN words, never inside one. */
+.split-word {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+/* ---------- Typewriter reveal (js/text-type.js) ---------- */
+
+.text-type-cursor {
+  margin-left: 0.1em;
+  display: inline-block;
+  color: var(--coral);
+}
+
+/* A FIXED number of blinks (js/text-type.js removes the cursor after this
+   plays out), not an infinite loop — see the file header for why. */
+.text-type-cursor--blink {
+  animation: text-type-blink 0.55s steps(1) 3;
+}
+
+@keyframes text-type-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+/* ---------- Boot loader ---------- */
+
+/* Shown by default (no JS needed to display it) while js/main.js awaits
+   loadAllData(); js/main.js hides it once every station has rendered. The
+   Merlion's water spout is the ONE deliberately looping animation on the
+   whole site (README §7.9.1 / §8 S3 task 9) — every other S3 animation
+   plays once and settles. Reduced-motion collapses it like any other loop,
+   via the blanket rule at the bottom of this file. */
+.boot-loader {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  background: var(--bg-starfield);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity var(--duration-slow) var(--ease-out-expo);
+}
+
+.boot-loader.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.boot-loader-scene {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  color: var(--ink-1);
+}
+
+.boot-merlion,
+.boot-spout-dots {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.boot-dot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 5px;
+  height: 5px;
+  border-radius: var(--radius-pill);
+  background: var(--strait-blue);
+  offset-path: path("M50 42 C42 30 30 24 18 24");
+  offset-distance: 0%;
+  opacity: 0;
+  animation: boot-spout-flow 1.2s linear infinite;
+}
+
+@keyframes boot-spout-flow {
+  0% { offset-distance: 0%; opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { offset-distance: 100%; opacity: 0; }
+}
+
+/* ---------- Reduced motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

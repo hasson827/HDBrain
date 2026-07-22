@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>HDBrain — JS/Python Affordability Engine Parity Test</title>
+</head>
+<body>
+<h1>Affordability engine parity test</h1>
+<p>Mirrors the 15 test functions in <code>HDBrain/tests/test_affordability.py</code>. Open this file
+directly (or via Live Server) — no build step, no server required beyond static file serving.</p>
+<div id="summary">Running...</div>
+<ol id="results"></ol>
+
+<script type="module">
+import {
+  makeProfile, forHdbLoan, forBankLoan,
+  monthlyMortgage, maxLoanFromPayment, stampDuty,
+  maxAffordablePrice, affordabilityMetrics,
+} from "./js/engine/affordability.js";
+
+const results = [];
+let currentTest = null;
+
+function test(name, fn) {
+  currentTest = name;
+  try {
+    fn();
+    results.push({ name, pass: true });
+  } catch (e) {
+    results.push({ name, pass: false, error: e.message });
+  }
+}
+
+function approx(actual, expected, abs = 1e-6) {
+  if (Math.abs(actual - expected) > abs) {
+    throw new Error(`expected ${expected}, got ${actual} (tolerance ${abs})`);
+  }
+}
+
+function assertTrue(cond, msg) {
+  if (!cond) throw new Error(msg || "assertion failed");
+}
+
+function assertRaises(fn, msg) {
+  try {
+    fn();
+  } catch (e) {
+    return;
+  }
+  throw new Error(msg || "expected an error to be thrown");
+}
+
+// 1. test_monthly_mortgage_zero_interest
+test("monthly_mortgage_zero_interest", () => {
+  approx(monthlyMortgage(500_000, 0.0, 0.0, 25), 500_000 / 300, 1e-6);
+});
+
+// 2. test_monthly_mortgage_normal
+test("monthly_mortgage_normal", () => {
+  const pay = monthlyMortgage(500_000, 0.25, 0.026, 25);
+  assertTrue(pay > 0);
+  approx(pay, 1701, 5);
+});
+
+// 3. test_max_loan_inverse_monthly_mortgage
+test("max_loan_inverse_monthly_mortgage", () => {
+  const pay = monthlyMortgage(500_000, 0.25, 0.026, 25);
+  const loan = maxLoanFromPayment(pay, 0.026, 25);
+  approx(loan, 375_000, 1);
+});
+
+// 4. test_stamp_duty_brackets
+test("stamp_duty_brackets", () => {
+  approx(stampDuty(180_000), 1_800);
+  approx(stampDuty(360_000), 1_800 + 3_600);
+  approx(stampDuty(1_000_000), 180_000 * 0.01 + 180_000 * 0.02 + 640_000 * 0.03);
+  approx(
+    stampDuty(2_000_000),
+    180_000 * 0.01 + 180_000 * 0.02 + 640_000 * 0.03 + 500_000 * 0.04 + 500_000 * 0.05
+  );
+});
+
+// 5. test_profile_defaults
+test("profile_defaults", () => {
+  const p = makeProfile({ monthlyIncome: 8_000 });
+  approx(p.downpaymentPct, 0.25);
+  approx(p.msrLimit, 0.30);
+  approx(p.tdsrLimit, 0.55);
+  assertTrue(p.loanType === "hdb");
+  approx(p.existingDebtMonthly, 0.0);
+});
+
+// 6. test_max_affordable_price_msr_bound
+test("max_affordable_price_msr_bound", () => {
+  const p = makeProfile({ monthlyIncome: 8_000 });
+  const maxPrice = maxAffordablePrice(p);
+  const monthly = monthlyMortgage(maxPrice, p.downpaymentPct, p.interestRate, p.tenureYears);
+  const maxMonthly = affordabilityMetrics(maxPrice, p).monthlyPayment;
+  approx(monthly, maxMonthly, 1);
+  assertTrue(monthly / p.monthlyIncome <= p.msrLimit + 1e-9);
+});
+
+// 7. test_max_affordable_price_tdsr_bound
+test("max_affordable_price_tdsr_bound", () => {
+  const p = makeProfile({ monthlyIncome: 8_000, existingDebtMonthly: 2_400 });
+  const maxPrice = maxAffordablePrice(p);
+  const monthly = monthlyMortgage(maxPrice, p.downpaymentPct, p.interestRate, p.tenureYears);
+  const totalDebt = monthly + p.existingDebtMonthly;
+  assertTrue(totalDebt / p.monthlyIncome <= p.tdsrLimit + 1e-9);
+  assertTrue(monthly / p.monthlyIncome <= p.msrLimit + 1e-9);
+});
+
+// 8. test_affordability_metrics_fields
+test("affordability_metrics_fields", () => {
+  const p = makeProfile({ monthlyIncome: 8_000 });
+  const m = affordabilityMetrics(500_000, p);
+  const expectedKeys = new Set([
+    "price", "maxAffordablePrice", "monthlyPayment", "monthlyIncome", "existingDebtMonthly",
+    "cashSavings", "msr", "msrLimit", "tdsr", "tdsrLimit", "pti", "priceToAnnualIncome",
+    "downpayment", "downpaymentPct", "loanAmount", "loanToValue", "stampDuty",
+    "totalUpfrontCash", "affordable", "affordabilityGap", "loanType",
+  ]);
+  const actualKeys = new Set(Object.keys(m));
+  assertTrue(actualKeys.size === expectedKeys.size, `key count mismatch: ${actualKeys.size} vs ${expectedKeys.size}`);
+  for (const k of expectedKeys) assertTrue(actualKeys.has(k), `missing key ${k}`);
+  approx(m.downpaymentPct, 0.25);
+  approx(m.loanToValue, 0.75);
+  approx(m.msrLimit, 0.30);
+  approx(m.tdsrLimit, 0.55);
+});
+
+// 9. test_affordability_boolean
+test("affordability_boolean", () => {
+  const p = makeProfile({ monthlyIncome: 8_000 });
+  const maxPrice = maxAffordablePrice(p);
+  assertTrue(affordabilityMetrics(maxPrice * 0.9, p).affordable === true);
+  assertTrue(affordabilityMetrics(maxPrice * 1.1, p).affordable === false);
+});
+
+// 10. test_factory_methods
+test("factory_methods", () => {
+  const hdb = forHdbLoan(8_000);
+  assertTrue(hdb.loanType === "hdb");
+  approx(hdb.downpaymentPct, 0.25);
+  approx(hdb.interestRate, 0.026);
+  approx(hdb.msrLimit, 0.30);
+
+  const bank = forBankLoan(8_000);
+  assertTrue(bank.loanType === "bank");
+  approx(bank.interestRate, 0.035);
+
+  const bankCustom = forBankLoan(8_000, { interestRate: 0.04, downpaymentPct: 0.30 });
+  approx(bankCustom.interestRate, 0.04);
+  approx(bankCustom.downpaymentPct, 0.30);
+});
+
+// 11. test_invalid_profile
+test("invalid_profile", () => {
+  assertRaises(() => maxAffordablePrice(makeProfile({ monthlyIncome: 8_000, downpaymentPct: -0.1 })));
+  assertRaises(() => maxAffordablePrice(makeProfile({ monthlyIncome: 8_000, downpaymentPct: 1.0 })));
+  assertRaises(() => maxAffordablePrice(makeProfile({ monthlyIncome: 8_000, loanType: "cash" })));
+  assertRaises(() => maxAffordablePrice(makeProfile({ monthlyIncome: 8_000, cashSavings: -1.0 })));
+});
+
+// 12. test_cash_savings_none_keeps_loan_bound
+test("cash_savings_none_keeps_loan_bound", () => {
+  const pUnknown = makeProfile({ monthlyIncome: 8_000 });
+  const pRich = makeProfile({ monthlyIncome: 8_000, cashSavings: 10_000_000 });
+  approx(maxAffordablePrice(pUnknown), maxAffordablePrice(pRich), 1e-6);
+});
+
+// 13. test_cash_savings_caps_price
+test("cash_savings_caps_price", () => {
+  const p = makeProfile({ monthlyIncome: 8_000, cashSavings: 50_000 });
+  const maxPrice = maxAffordablePrice(p);
+  const unconstrained = maxAffordablePrice(makeProfile({ monthlyIncome: 8_000 }));
+  assertTrue(maxPrice < unconstrained);
+  const upfront = maxPrice * p.downpaymentPct + stampDuty(maxPrice);
+  approx(upfront, 50_000, 1);
+  const m = affordabilityMetrics(maxPrice * 1.05, p);
+  assertTrue(m.affordable === false);
+});
+
+// 14. test_cash_savings_pools_with_cpf
+test("cash_savings_pools_with_cpf", () => {
+  const pCashOnly = makeProfile({ monthlyIncome: 8_000, cashSavings: 50_000 });
+  const pMixed = makeProfile({ monthlyIncome: 8_000, cashSavings: 30_000, cpfAvailable: 20_000 });
+  approx(maxAffordablePrice(pCashOnly), maxAffordablePrice(pMixed), 1e-6);
+});
+
+// 15. test_cash_savings_zero_means_nothing_affordable
+test("cash_savings_zero_means_nothing_affordable", () => {
+  const p = makeProfile({ monthlyIncome: 8_000, cashSavings: 0.0 });
+  approx(maxAffordablePrice(p), 0.0);
+});
+
+// ---- render ----
+const list = document.getElementById("results");
+let passCount = 0;
+for (const r of results) {
+  const li = document.createElement("li");
+  li.textContent = r.pass ? `PASS — ${r.name}` : `FAIL — ${r.name}: ${r.error}`;
+  li.style.color = r.pass ? "green" : "red";
+  list.appendChild(li);
+  if (r.pass) passCount++;
+}
+document.getElementById("summary").textContent =
+  `${passCount}/${results.length} passed` + (passCount === results.length ? " — all green." : " — FAILURES ABOVE.");
+document.title = `[${passCount}/${results.length}] ` + document.title;
+</script>
+</body>
+</html>
