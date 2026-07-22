@@ -1,8 +1,10 @@
 """
-Baseline model: median resale price by town and flat type.
+Baseline model: area-proportional unit price by town and flat type.
 
-This represents the "agent's rule of thumb" and is used to quantify how much
-ML improves over a simple grouping strategy.
+This represents the "agent's rule of thumb" — estimate a representative
+price per square metre for each (town, flat_type), then scale by the
+subject flat's floor area.  Used to quantify how much ML improves over
+a simple grouping strategy.
 """
 
 from pathlib import Path
@@ -23,16 +25,28 @@ MODEL_NAME = "baseline"
 
 
 def train(train_df):
-    """Compute median real_price by (town, flat_type)."""
-    return train_df.groupby(["town", "flat_type"])["real_price"].median().reset_index()
+    """Compute area-adjusted unit price by (town, flat_type).
+
+    Instead of a flat median price per group, we estimate the representative
+    price per square metre.  Prediction is then unit_price * floor_area_sqm,
+    which respects the intuition that larger flats in the same town/flat_type
+    should cost proportionally more.
+    """
+    grouped = (
+        train_df.groupby(["town", "flat_type"])
+        .agg(total_price=("real_price", "sum"), total_area=("floor_area_sqm", "sum"))
+        .reset_index()
+    )
+    grouped["unit_price"] = grouped["total_price"] / grouped["total_area"]
+    return grouped[["town", "flat_type", "unit_price"]]
 
 
 def predict(baseline_df, X):
-    """Merge baseline medians onto X; fallback to global median if unseen group."""
-    baseline_renamed = baseline_df.rename(columns={"real_price": "predicted_price"})
-    merged = X.merge(baseline_renamed, on=["town", "flat_type"], how="left")
-    global_median = baseline_df["real_price"].median()
-    merged["predicted_price"] = merged["predicted_price"].fillna(global_median)
+    """Predict price = unit_price * floor_area_sqm; fallback to global unit price."""
+    merged = X.merge(baseline_df, on=["town", "flat_type"], how="left")
+    global_unit_price = baseline_df["unit_price"].mean()
+    merged["unit_price"] = merged["unit_price"].fillna(global_unit_price)
+    merged["predicted_price"] = merged["unit_price"] * merged["floor_area_sqm"]
     return merged["predicted_price"].values
 
 

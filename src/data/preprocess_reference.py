@@ -419,12 +419,11 @@ def build_resale_by_year() -> pd.DataFrame:
     # CPI adjustment
     print("Applying CPI adjustment...")
     cpi = pd.read_csv(RAW_DIR / "CPI.csv")
-    cpi["month"] = pd.to_datetime(cpi["month"], format="%Y %b")
+    # New CPI file uses YYYY-MM; legacy file used "1961 Jan" style.
+    cpi["month"] = pd.to_datetime(cpi["month"], format="%Y-%m")
 
-    # The reference CPI file ends in 2020-09, but the user's resale data may
-    # extend beyond that.  Forward-fill the latest CPI for any missing months so
-    # that all transactions can be inflation-adjusted.  This is a pragmatic
-    # choice; for production work one would append the latest official CPI series.
+    # The CPI series now extends to 2026-05, covering the full resale window.
+    # Keep the merge + forward-fill only as a safety net for any residual gaps.
     min_month, max_month = prices["month"].min(), prices["month"].max()
     full_months = pd.DataFrame(
         {"month": pd.date_range(start=min_month, end=max_month, freq="MS")}
