@@ -27,7 +27,7 @@ never be able to buy.
 |---|---|---|
 | *What can we afford?* | A max affordable price, the binding constraint named, and every town tiered on a map | Rule-based engine: MSR 30% / TDSR 55%, LTV 75%, progressive BSD, annuity inversion + bisection |
 | *What is this flat worth, and why?* | A point estimate, a 90% interval, and a per-flat SHAP breakdown **in Singapore dollars** | XGBoost + quantile regression (q05/q50/q95) + TreeSHAP |
-| *Should we buy now?* | A live 99-year lease-decay curve and a 27-town resale price index | Precomputed model sweeps over `remaining_lease` |
+| *Should we buy now?* | A live 99-year lease-decay curve and a 26-town resale price index | Precomputed model sweeps over `remaining_lease` |
 
 Two design commitments run through all of it:
 
@@ -371,7 +371,7 @@ refused with *"Resource not accessible by integration"*.
 
 ## References
 
-Full list from [`literature_review.md`](../literature_review.md), which also
+Full list from [`literature_review.md`](docs/literature_review.md), which also
 records how each paper informed the design (approaches, strengths, limitations,
 gaps). Entries marked ★ are the five surfaced on the poster and in the site's
 "Further reading".
