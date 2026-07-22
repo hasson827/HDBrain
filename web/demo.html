@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HDBrain — walkthrough</title>
+<meta name="description" content="A six-minute walkthrough of HDBrain: affordability mapping, explainable valuation, and the generated report." />
+
+<!-- Only the token layer, not the whole site's CSS: this page has one job and
+     should not pull in the scrollytelling stylesheets to do it. -->
+<link rel="stylesheet" href="./css/tokens.css" />
+
+<!-- Open Graph, so a link pasted into Slack or WeChat shows the poster frame
+     rather than a bare URL. Absolute, because relative OG URLs are ignored. -->
+<meta property="og:title" content="HDBrain — walkthrough" />
+<meta property="og:type" content="video.other" />
+<meta property="og:url" content="https://hasson827.github.io/HDBrain/demo.html" />
+<meta property="og:image" content="https://hasson827.github.io/HDBrain/static/demo-poster.jpg" />
+
+<style>
+  *{ box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    min-height: 100dvh;
+    background: var(--bg-0);
+    color: var(--ink-1);
+    font-family: var(--font-body);
+    line-height: 1.5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-6);
+    padding: var(--space-6);
+  }
+
+  header { text-align: center; max-width: 60ch; }
+
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    letter-spacing: -0.02em;
+  }
+
+  h1 span { color: var(--coral); }
+
+  p { color: var(--ink-2); margin-top: 0.5rem; }
+
+  /* The video is the page. Cap it at its own encoded width so it is never
+     upscaled, and let the viewport take over below that. */
+  video {
+    width: 100%;
+    max-width: 1280px;
+    aspect-ratio: 16 / 10;
+    border-radius: var(--radius-md);
+    background: #000;
+    display: block;
+  }
+
+  .back {
+    color: var(--ink-1);
+    font-size: 0.95rem;
+    text-decoration-color: var(--coral);
+    text-underline-offset: 4px;
+  }
+</style>
+</head>
+<body>
+  <header>
+    <h1>HDBrain <span>walkthrough</span></h1>
+    <p>Six minutes through the whole journey: what a household can afford,
+       what a flat is worth and why, and the report the model writes at the end.</p>
+  </header>
+
+  <!--
+    playsinline keeps iOS from hijacking the video into its fullscreen player,
+    which would drop the page around it. preload="metadata" fetches only the
+    header so arriving on conference wifi costs kilobytes, not 28 MB; the file
+    is encoded with +faststart so playback can begin before the download does.
+  -->
+  <video controls playsinline preload="metadata" poster="./static/demo-poster.jpg">
+    <source src="./static/demo.mp4" type="video/mp4" />
+    <p>Your browser cannot play this video.
+       <a href="./static/demo.mp4">Download it instead</a>.</p>
+  </video>
+
+  <a class="back" href="./">Open the live product &rarr;</a>
+</body>
+</html>
