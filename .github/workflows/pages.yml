@@ -42,14 +42,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # enablement: true asks the action to turn Pages on via the API instead of
-      # requiring an admin to do it in Settings first. It only works if the
-      # repository allows the workflow token to create the Pages site; if it
-      # does not, this step fails exactly as before and the manual route in the
-      # header comment is still the answer.
+      # Tried `enablement: true` here so the workflow could switch Pages on by
+      # itself; GitHub refuses it with "Resource not accessible by integration"
+      # (run 29926160769). Creating the Pages site is admin-only, so the manual
+      # step in the header comment is the only route.
       - uses: actions/configure-pages@v5
-        with:
-          enablement: true
 
       - uses: actions/upload-pages-artifact@v3
         with:
