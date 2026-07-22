@@ -27,6 +27,34 @@ const OTTER_SVG = `
   </svg>
 `;
 
+// The five papers the project leans on most, in the order they matter to it:
+// the hedonic theory that licenses reading SHAP values as implicit prices, the
+// Singapore lease-decay study, two systematic reviews of automated valuation,
+// and the open-data + XAI result closest to our own method. The full review of
+// all is in the repository; this is a reading list, not a bibliography, so it
+// sits collapsed behind a <details> the way ST5 and ST6 hide their own detail.
+const READING = [
+  {
+    cite: `Rosen, S. (1974). Hedonic prices and implicit markets: Product differentiation in pure competition. <i>Journal of Political Economy</i>, 82(1), 34&ndash;55.`,
+    doi: "https://doi.org/10.1086/260169",
+  },
+  {
+    cite: `Li, B., Gao, F., &amp; Tan, S. (2023). Aging like fine wine: A Singapore public housing story. <i>International Real Estate Review</i>, 26(1), 95&ndash;126.`,
+  },
+  {
+    cite: `El Jaouhari, A., Samadhiya, A., Kumar, A., &Scaron;e&scaron;plaukis, A., &amp; Raslanas, S. (2024). Mapping the landscape: A systematic literature review on automated valuation models and strategic applications in real estate. <i>International Journal of Strategic Property Management</i>, 28(5), 286&ndash;301.`,
+    doi: "https://doi.org/10.3846/ijspm.2024.22251",
+  },
+  {
+    cite: `Tekouabou, S. C. K., Gherghina, &Scedil;. C., Kameni, E. D., Filali, Y., &amp; Idrissi Gartoumi, K. (2024). AI-based on machine learning methods for urban real estate prediction: A systematic survey. <i>Archives of Computational Methods in Engineering</i>, 31(2), 1079&ndash;1095.`,
+    doi: "https://doi.org/10.1007/s11831-023-10010-5",
+  },
+  {
+    cite: `Trindade Neves, F., Apar&iacute;cio, M., &amp; de Castro Neto, M. (2024). The impacts of open data and explainable AI on real estate price predictions in smart cities. <i>Applied Sciences</i>, 14(5), 2209.`,
+    doi: "https://doi.org/10.3390/app14052209",
+  },
+];
+
 const DISCLOSURES = [
   {
     title: "Not a licensed valuation",
@@ -34,7 +62,7 @@ const DISCLOSURES = [
   },
   {
     title: "Training data ends in 2023",
-    body: "The CPI (Consumer Price Index) series used to inflation-adjust prices freezes after 2020-09, so estimates run 9–16% below real 2025 transactions during this upside market.",
+    body: "The model learns from sales up to 2023 and cannot extrapolate the 2024–2026 upswing. On unseen 2024+ sales it under-predicts by about 7% at the median, so an actual transaction may print above this estimate.",
   },
   {
     title: "Prediction intervals are optimistic",
@@ -98,6 +126,16 @@ export function initSt7() {
           ${TEAM.map((m) => `<li>${m.name} <span class="team-school">(${m.school})</span></li>`).join("")}
         </ul>
         <p class="disclosure">Listed alphabetically by surname.</p>
+
+        <details class="disclosure-block card">
+          <summary>Further reading</summary>
+          <ol class="ref-list">
+            ${READING.map((r) => `
+              <li>${r.cite}${r.doi ? ` <a href="${r.doi}" target="_blank" rel="noopener">${r.doi.replace("https://doi.org/", "doi:")}</a>` : ""}</li>`).join("")}
+          </ol>
+          <p class="disclosure">Five of the papers behind this project. The full
+             literature review ships with the repository.</p>
+        </details>
         <div class="cluster">
           <a class="btn-ghost btn-sm" href="https://github.com/hasson827/HDBrain" target="_blank" rel="noopener">GitHub</a>
           <a class="btn-ghost btn-sm" href="#st0-departure">Back to the top &uarr;</a>

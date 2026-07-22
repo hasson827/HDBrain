@@ -23,9 +23,9 @@ export function initSt5() {
         </label>
         <div id="st5-chart" style="width: 100%; height: 380px;"></div>
         <p class="disclosure" id="st5-chart-note"></p>
-        <p class="disclosure">"Median resale price" is inflation-adjusted (CPI, base &asymp; 2019)
-           up to Sep 2020; from Oct 2020 onward the CPI series ends, so later points are
-           effectively raw transaction prices.</p>
+        <p class="disclosure">"Median resale price" is inflation-adjusted with Singapore's official CPI
+           series (base year 2024 = 100), which covers every month shown. Prices are therefore
+           expressed in constant 2024 dollars, not the amount paid at the time.</p>
       </div>
       <details class="disclosure-block card">
         <summary>Latest median price by town <span id="st5-ranking-count"></span></summary>

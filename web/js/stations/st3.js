@@ -34,9 +34,9 @@ export function initSt3() {
     <div class="station-inner st3-layout" data-valued="false">
       <div class="st3-head">
         <h2>ST3 &middot; Valuation Stop &middot; What is this flat worth?</h2>
-        <p class="disclosure">Estimates are based on training data up to 2023; recent (2025) resale
-          prices ran 9&ndash;16% above these estimates during the upside market (see the Model Arena
-          for details).</p>
+        <p class="disclosure">Estimates are based on training data up to 2023; on unseen 2024&ndash;2026
+          sales the model under-predicts by about 7% at the median during this upside market (see the
+          Model Arena for details).</p>
       </div>
       <div class="st3-body">
         <div class="card st3-form-card">
@@ -206,7 +206,7 @@ function wireExplain(panel, result, shapTop6, query) {
       "Factor contributions versus the market-wide average (SHAP):",
       ...shapTop6.map((f) =>
         `- ${featureLabel(f.feature)}: ${f.value_sgd >= 0 ? "pushed the estimate up by" : "pulled the estimate down by"} ${money(f.value_sgd)}`),
-      "Model context: trained on resale data up to 2023; recent (2025) transactions ran 9-16% above such estimates.",
+      "Model context: trained on resale data up to 2023; on unseen 2024-2026 sales the model under-predicts by about 7% at the median.",
     ].join("\n");
 
     btn.addEventListener("click", async () => {

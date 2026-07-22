@@ -73,8 +73,8 @@ export class TemplateProvider {
       "",
       ...rows,
       "",
-      "Note: the model is trained on data up to 2023 and recent (2025) transactions ran " +
-      "9-16% above these estimates during the upside market. See section 6.",
+      "Note: the model is trained on data up to 2023 and under-predicts unseen 2024-2026 " +
+      "sales by about 7% at the median during this upside market. See section 6.",
     ].join("\n");
   }
 
@@ -108,7 +108,8 @@ export class TemplateProvider {
       "",
       "- This is not a licensed valuation. It is a statistical estimate from historical resale transactions.",
       "- Training data ends in 2023; the 90% prediction interval has measured coverage well below 90% " +
-      "on 2024-2026 data (see the Model Arena for exact figures) because of a CPI-adjustment limitation.",
+      "on 2024-2026 data (see the Model Arena for exact figures) because prices have moved beyond the " +
+      "range the interval was calibrated on.",
       "- Comparable-flat icons are schematic silhouettes by flat type, not photos of the actual unit.",
       "- Report drafted by: rules-based template (no LLM used).",
     ].join("\n");

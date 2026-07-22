@@ -21,7 +21,7 @@ const METRIC_AXIS = { rmse: "RMSE (S$)", mae: "MAE (S$)", r2: "R²", mape: "Medi
 
 // Model keys as exported from Python -> names a visitor can read.
 const MODEL_LABELS = {
-  baseline: "Baseline (group median)",
+  baseline: "Baseline (area unit price)",
   linear_regression: "Linear Regression",
   lasso_regression: "Lasso",
   ridge_regression: "Ridge",
@@ -101,11 +101,10 @@ export function initSt6() {
 
       <details class="disclosure-block card">
         <summary>Why is the Baseline's R&sup2; negative?</summary>
-        <p>The CPI (Consumer Price Index) file used to inflation-adjust prices ends in 2020-09; months after that are
-           forward-filled, so from 2020-10 onward the adjusted price is effectively the nominal price
-           during a genuine market upswing. The town&times;flat_type median baseline has no way to see
-           that upswing, so it systematically underpredicts 2024-2026 and its R&sup2; goes negative.
-           It's a real, explainable failure mode, not a bug.</p>
+        <p>The baseline learns one price per square metre for each town&times;flat_type from sales up to 2023,
+           then scales it by the flat's floor area. That unit price is fixed in time, so it cannot follow
+           the 2024-2026 upswing: it systematically underpredicts recent sales, and R&sup2; drops below zero
+           &mdash; worse than always guessing the average. It's a real, explainable failure mode, not a bug.</p>
       </details>
 
       <details class="disclosure-block card">
