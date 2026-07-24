@@ -230,11 +230,11 @@ body {
 .train {
   position: absolute;
   z-index: 2;
-  width: 42mm; /* along the direction of travel */
-  height: auto; /* 9.746:1 source aspect -> 4.31mm across */
+  width: 46mm; /* along the direction of travel */
+  height: auto; /* 9.746:1 source aspect -> 4.72mm across */
   left: var(--tx);
   top: var(--ty);
-  opacity: 0.95;
+  opacity: 1;
   /* translate(-50%,-50%) centres the car on the route, then the rotation
      turns its nose into the direction of travel. Order matters: translate
      first, or the offset itself gets rotated. */
@@ -1138,7 +1138,7 @@ em {
  * ========================================================================= */
 .prod-grid {
   display: grid;
-  grid-template-columns: 155mm 112mm 255mm;
+  grid-template-columns: 200mm 157mm 165mm;
   gap: 9mm;
   margin-top: 3mm;
   flex: 1;
@@ -1229,6 +1229,7 @@ em {
 .stn b::before {
   content: "";
   position: absolute;
+  box-sizing: border-box;
   left: -7.25mm;
   top: 50%;
   width: 2.6mm;
