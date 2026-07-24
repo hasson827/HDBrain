@@ -5,7 +5,7 @@ deployable web product.**
 
 [Live product](https://hasson827.github.io/HDBrain/) ·
 [Six-minute walkthrough](https://hasson827.github.io/HDBrain/demo.html) ·
-[A1 poster (PDF)](poster/HDBrain_poster_A1.pdf)
+[A1 poster (PDF)](poster/SWS3022_01.pdf)
 
 Capstone for **NUS SWS3022 — AI/ML in Financial Services**, Group 1.
 Lin Hali (ZJU) · Xu Chuhao (UIUC) · Zhang Zherui (UIUC) · Zhao Hongshuo (ZJU)
